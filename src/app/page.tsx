@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
-import { query } from '@/lib/db';
-import { Category, Job, TickerAlert } from '@/types';
+import { getCachedHomeData } from '@/lib/data';
 import Ticker from '@/components/Ticker';
 import QuickLinksGrid from '@/components/QuickLinksGrid';
 import HomeGridClient from '@/components/HomeGridClient';
+
+// Enable ISR (5 minutes background revalidation)
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Sarkari Result 2026 : SarkariResult.Com Official Website for Latest Jobs, Results, Admit Card',
@@ -32,57 +34,14 @@ export const metadata: Metadata = {
   },
 };
 
-async function getHomeData() {
-  try {
-    // 1. Fetch categories
-    const categoriesRes = await query<Category>(
-      'SELECT * FROM categories ORDER BY order_index ASC'
-    );
-    const categories = categoriesRes.rows;
-
-    // 2. Fetch jobs
-    const jobsRes = await query<Job>(
-      `SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
-       FROM jobs j 
-       JOIN categories c ON j.category_id = c.id 
-       ORDER BY j.id DESC`
-    );
-
-    // Group jobs by category slug
-    const jobsByCategory: Record<string, Job[]> = {};
-    for (const cat of categories) {
-      jobsByCategory[cat.slug] = [];
-    }
-
-    for (const job of jobsRes.rows) {
-      if (job.category_slug) {
-        if (!jobsByCategory[job.category_slug]) {
-          jobsByCategory[job.category_slug] = [];
-        }
-        jobsByCategory[job.category_slug].push(job);
-      }
-    }
-
-    // 3. Fetch ticker alerts
-    const alertsRes = await query<TickerAlert>(
-      'SELECT * FROM ticker_alerts WHERE is_active = true ORDER BY id DESC LIMIT 10'
-    );
-    const alerts = alertsRes.rows;
-
-    return { categories, jobsByCategory, alerts };
-  } catch (err) {
-    console.error('Error fetching home data:', err);
-    return { categories: [], jobsByCategory: {}, alerts: [] };
-  }
-}
-
 interface PageProps {
   searchParams: Promise<{ q?: string }>;
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
   const { q } = await searchParams;
-  const { categories, jobsByCategory, alerts } = await getHomeData();
+  // High-performance cached fetch (parallel queries + trimmed payload)
+  const { categories, jobsByCategory, alerts } = await getCachedHomeData();
 
   // Structured Data (JSON-LD) for SEO
   const jsonLd = {

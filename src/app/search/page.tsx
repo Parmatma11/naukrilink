@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { query } from '@/lib/db';
-import { Job } from '@/types';
+import { searchJobsCached } from '@/lib/data';
 import SearchBar from '@/components/SearchBar';
 import { ArrowRight, Search, FileText } from 'lucide-react';
 
@@ -11,54 +10,17 @@ interface Props {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
-  const searchQuery = q || '';
+  const searchQuery = (q || '').trim();
   return {
     title: searchQuery ? `Search Results for "${searchQuery}" - Sarkari Result 2026` : 'Search Government Jobs & Results 2026',
     description: `Search all latest Sarkari Result recruitment notices, admit cards, answer keys and results for ${searchQuery}.`,
   };
 }
 
-async function searchJobs(queryString: string): Promise<Job[]> {
-  if (!queryString.trim()) return [];
-
-  try {
-    const words = queryString.trim().split(/\s+/).filter(Boolean);
-
-    const conditions: string[] = [];
-    const values: any[] = [];
-
-    words.forEach((word, idx) => {
-      const paramIdx = idx + 1;
-      conditions.push(`(
-        j.title ILIKE $${paramIdx} OR 
-        j.department ILIKE $${paramIdx} OR 
-        j.short_info ILIKE $${paramIdx} OR 
-        c.name ILIKE $${paramIdx}
-      )`);
-      values.push(`%${word}%`);
-    });
-
-    const sql = `
-      SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
-      FROM jobs j 
-      JOIN categories c ON j.category_id = c.id 
-      WHERE ${conditions.join(' AND ')}
-      ORDER BY j.id DESC
-      LIMIT 100
-    `;
-
-    const res = await query<Job>(sql, values);
-    return res.rows;
-  } catch (err) {
-    console.error('Error searching jobs:', err);
-    return [];
-  }
-}
-
 export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const queryStr = (q || '').trim();
-  const results = queryStr ? await searchJobs(queryStr) : [];
+  const results = queryStr ? await searchJobsCached(queryStr) : [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">

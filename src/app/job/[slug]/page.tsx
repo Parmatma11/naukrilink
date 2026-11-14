@@ -1,33 +1,25 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { query } from '@/lib/db';
+import { getCachedJob, getTopJobSlugs } from '@/lib/data';
 import { Job, VacancyDetail } from '@/types';
 import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase } from 'lucide-react';
+
+// Next.js ISR: Revalidate job page in background every 30 minutes
+export const revalidate = 1800;
+
+// Pre-render the top 50 latest jobs at build time for instant loading
+export async function generateStaticParams() {
+  return await getTopJobSlugs();
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function getJob(slug: string): Promise<Job | null> {
-  try {
-    const res = await query<Job>(
-      `SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
-       FROM jobs j 
-       JOIN categories c ON j.category_id = c.id 
-       WHERE j.slug = $1`,
-      [slug]
-    );
-    return res.rows[0] || null;
-  } catch (err) {
-    console.error('Error fetching job:', err);
-    return null;
-  }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const job = await getJob(slug);
+  const job = await getCachedJob(slug);
 
   if (!job) {
     return { title: 'Job Not Found - Sarkari Result' };
@@ -53,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function JobDetailPage({ params }: Props) {
   const { slug } = await params;
-  const job = await getJob(slug);
+  const job = await getCachedJob(slug);
 
   if (!job) {
     notFound();

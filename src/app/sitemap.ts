@@ -1,13 +1,11 @@
 import { MetadataRoute } from 'next';
-import { query } from '@/lib/db';
-import { Category, Job } from '@/types';
+import { getCachedSitemapData } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sarkariresult.com';
 
   try {
-    const catsRes = await query<Category>('SELECT slug FROM categories');
-    const jobsRes = await query<Job>('SELECT slug, updated_at FROM jobs');
+    const { categories, jobs } = await getCachedSitemapData();
 
     const staticRoutes: MetadataRoute.Sitemap = [
       {
@@ -18,14 +16,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     ];
 
-    const categoryRoutes: MetadataRoute.Sitemap = catsRes.rows.map((cat) => ({
+    const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
       url: `${baseUrl}/category/${cat.slug}`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.9,
     }));
 
-    const jobRoutes: MetadataRoute.Sitemap = jobsRes.rows.map((job) => ({
+    const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
       url: `${baseUrl}/job/${job.slug}`,
       lastModified: new Date(job.updated_at || Date.now()),
       changeFrequency: 'daily',

@@ -5,9 +5,13 @@
 const { Pool } = require('pg');
 const cheerio = require('cheerio');
 
-const connectionString =
+let connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://postgres.qvwajcdxqqppzzxiktzx:K!%40rishan12@aws-1-ap-south-1.pooler.supabase.com:5432/postgres';
+  'postgresql://postgres.qvwajcdxqqppzzxiktzx:K!%40rishan12@aws-1-ap-south-1.pooler.supabase.com:6543/postgres';
+
+if (connectionString.includes('pooler.supabase.com:5432')) {
+  connectionString = connectionString.replace(':5432', ':6543');
+}
 
 const isSupabase = connectionString.includes('supabase.com');
 
@@ -288,6 +292,17 @@ async function scrapeFull() {
     }
 
     console.log(`\n🎉 Finished updating! Total updated with precision fees: ${totalUpdated}`);
+
+    // Trigger Next.js on-demand cache revalidation
+    try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
+      const revalRes = await fetch(`${siteUrl}/api/revalidate?secret=sarkari-revalidate-secret&tag=jobs`);
+      if (revalRes.ok) {
+        console.log('⚡ Next.js Cache successfully revalidated across all tags!');
+      }
+    } catch (e) {
+      // Ignored if app is not running locally during batch scrape
+    }
   } catch (err) {
     console.error('Error during scraping:', err);
   } finally {

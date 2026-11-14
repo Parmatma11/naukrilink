@@ -1,38 +1,23 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { query } from '@/lib/db';
-import { Category, Job } from '@/types';
+import { getCachedCategoryData, getAllCategorySlugs } from '@/lib/data';
+
+// Next.js ISR: Revalidate category listings every 10 minutes
+export const revalidate = 600;
+
+// Pre-render all category pages at build time
+export async function generateStaticParams() {
+  return await getAllCategorySlugs();
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function getCategoryData(slug: string) {
-  try {
-    const catRes = await query<Category>(
-      'SELECT * FROM categories WHERE slug = $1',
-      [slug]
-    );
-    const category = catRes.rows[0] || null;
-
-    if (!category) return null;
-
-    const jobsRes = await query<Job>(
-      'SELECT * FROM jobs WHERE category_id = $1 ORDER BY id DESC',
-      [category.id]
-    );
-
-    return { category, jobs: jobsRes.rows };
-  } catch (err) {
-    console.error('Error fetching category data:', err);
-    return null;
-  }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getCategoryData(slug);
+  const data = await getCachedCategoryData(slug);
 
   if (!data) return { title: 'Category Not Found' };
 
@@ -50,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
-  const data = await getCategoryData(slug);
+  const data = await getCachedCategoryData(slug);
 
   if (!data) notFound();
 
