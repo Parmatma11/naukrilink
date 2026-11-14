@@ -172,37 +172,62 @@ async function parseJobDetail(url) {
       inVacancySection = false;
     }
 
-    // Important Links Row Detection
-    const a = $(row).find('a');
-    a.each((_, linkTag) => {
-      const linkHref = $(linkTag).attr('href');
-      const linkText = $(linkTag).text().trim().toLowerCase();
-      const fullRowText = rowText.toLowerCase();
+    // Scoped Important Links Row Detection
+    if (rowText.toLowerCase().includes('important link') || rowText.toLowerCase().includes('useful link')) {
+      inVacancySection = false;
+    }
 
-      if (linkHref && linkHref.startsWith('http')) {
-        if (fullRowText.includes('apply online') || linkText.includes('apply online')) {
-          if (!importantLinks.apply_online) importantLinks.apply_online = linkHref;
+    const isAfterLinksHeader = rowText.toLowerCase().includes('important link') || rowText.toLowerCase().includes('useful link');
+    if (isAfterLinksHeader) {
+      // Set flag on outer scope if needed
+    }
+
+    const aTags = $(row).find('a');
+    if (aTags.length > 0) {
+      aTags.each((_, linkTag) => {
+        const linkHref = $(linkTag).attr('href');
+        if (!linkHref || !linkHref.startsWith('http')) return;
+        const cleanHref = linkHref.trim();
+
+        // Strict filter: Ignore bare root homepages, app stores, and social networks
+        if (
+          cleanHref === 'https://www.sarkariresult.com/' ||
+          cleanHref === 'https://www.sarkariresult.com' ||
+          cleanHref === 'http://www.sarkariresult.com/' ||
+          cleanHref === 'http://www.sarkariresult.com' ||
+          cleanHref.includes('play.google.com') ||
+          cleanHref.includes('itunes.apple.com') ||
+          cleanHref.includes('sarkariresultportal.com') ||
+          cleanHref.includes('sarkariresult.tools') ||
+          cleanHref.includes('t.me/') ||
+          cleanHref.includes('whatsapp.com') ||
+          cleanHref.includes('youtube.com') ||
+          cleanHref.includes('youtu.be')
+        ) {
+          return;
         }
-        if (fullRowText.includes('notification') || linkText.includes('notification')) {
-          if (!importantLinks.download_notification) importantLinks.download_notification = linkHref;
+
+        const linkText = $(linkTag).text().trim().toLowerCase();
+        const tds = $(row).find('td');
+        const labelText = tds.length > 1 ? $(tds[0]).text().toLowerCase().trim() : rowText.toLowerCase();
+
+        if ((labelText.includes('apply online') || linkText.includes('apply online')) && !importantLinks.apply_online) {
+          importantLinks.apply_online = cleanHref;
+        } else if ((labelText.includes('notification') || linkText.includes('notification')) && !importantLinks.download_notification) {
+          importantLinks.download_notification = cleanHref;
+        } else if ((labelText.includes('result') || labelText.includes('score card') || linkText.includes('result')) && !importantLinks.result) {
+          importantLinks.result = cleanHref;
+        } else if ((labelText.includes('admit card') || labelText.includes('hall ticket') || linkText.includes('admit card')) && !importantLinks.admit_card) {
+          importantLinks.admit_card = cleanHref;
+        } else if ((labelText.includes('answer key') || linkText.includes('answer key')) && !importantLinks.answer_key) {
+          importantLinks.answer_key = cleanHref;
+        } else if ((labelText.includes('syllabus') || linkText.includes('syllabus')) && !importantLinks.syllabus) {
+          importantLinks.syllabus = cleanHref;
+        } else if ((labelText.includes('official website') || linkText.includes('official website')) && !importantLinks.official_website) {
+          importantLinks.official_website = cleanHref;
         }
-        if (fullRowText.includes('official website') || linkText.includes('official website')) {
-          if (!importantLinks.official_website) importantLinks.official_website = linkHref;
-        }
-        if (fullRowText.includes('admit card') || linkText.includes('admit card')) {
-          if (!importantLinks.admit_card) importantLinks.admit_card = linkHref;
-        }
-        if (fullRowText.includes('result') || linkText.includes('result')) {
-          if (!importantLinks.result) importantLinks.result = linkHref;
-        }
-        if (fullRowText.includes('answer key') || linkText.includes('answer key')) {
-          if (!importantLinks.answer_key) importantLinks.answer_key = linkHref;
-        }
-        if (fullRowText.includes('syllabus') || linkText.includes('syllabus')) {
-          if (!importantLinks.syllabus) importantLinks.syllabus = linkHref;
-        }
-      }
-    });
+      });
+    }
   });
 
   return {
@@ -240,6 +265,7 @@ async function scrapeFull() {
     ];
 
     let totalUpdated = 0;
+    let totalInserted = 0;
 
     for (let i = 0; i < Math.min(quickLists.length, categoryMapping.length); i++) {
       const cat = categoryMapping[i];
@@ -286,17 +312,47 @@ async function scrapeFull() {
             ]
           );
           totalUpdated++;
-          process.stdout.write(`* [${j + 1}/${listItems.length}] Cleaned: ${rawTitle.slice(0, 28)}...\n`);
+          process.stdout.write(`* [${j + 1}/${listItems.length}] Updated: ${rawTitle.slice(0, 28)}...\n`);
+        } else {
+          let slug = generateSlug(finalTitle);
+          const slugCheck = await client.query('SELECT id FROM jobs WHERE slug = $1', [slug]);
+          if (slugCheck.rows.length > 0) {
+            slug = `${slug}-${Date.now().toString().slice(-4)}`;
+          }
+
+          await client.query(
+            `INSERT INTO jobs (
+              category_id, title, slug, short_info, post_date,
+              important_dates, application_fee, age_limit,
+              vacancy_details, important_links, source_url, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+            [
+              cat.id,
+              finalTitle,
+              slug,
+              shortInfo,
+              postDate,
+              JSON.stringify(importantDates),
+              JSON.stringify(applicationFee),
+              JSON.stringify(ageLimit),
+              JSON.stringify(vacancyDetails),
+              JSON.stringify(importantLinks),
+              sourceUrl
+            ]
+          );
+          totalInserted++;
+          console.log(`\n✨ [NEW NOTIFICATION INSERTED] ${finalTitle}`);
         }
       }
     }
 
-    console.log(`\n🎉 Finished updating! Total updated with precision fees: ${totalUpdated}`);
+    console.log(`\n🎉 Ingestion complete! Updated: ${totalUpdated} | Newly Inserted: ${totalInserted}`);
 
     // Trigger Next.js on-demand cache revalidation
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
-      const revalRes = await fetch(`${siteUrl}/api/revalidate?secret=sarkari-revalidate-secret&tag=jobs`);
+      const secret = process.env.REVALIDATION_SECRET || 'sarkari-revalidate-secret';
+      const revalRes = await fetch(`${siteUrl}/api/revalidate?secret=${secret}&tag=jobs`);
       if (revalRes.ok) {
         console.log('⚡ Next.js Cache successfully revalidated across all tags!');
       }

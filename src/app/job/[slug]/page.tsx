@@ -57,6 +57,21 @@ export default async function JobDetailPage({ params }: Props) {
   const links = job.important_links || {};
   const vacancies: VacancyDetail[] = Array.isArray(job.vacancy_details) ? job.vacancy_details : [];
 
+  const isValidUrl = (url?: string): url is string => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim().toLowerCase();
+    if (!trimmed.startsWith('http')) return false;
+    if (
+      trimmed === 'https://www.sarkariresult.com/' ||
+      trimmed === 'https://www.sarkariresult.com' ||
+      trimmed === 'http://www.sarkariresult.com/' ||
+      trimmed === 'http://www.sarkariresult.com'
+    ) {
+      return false;
+    }
+    return true;
+  };
+
   const hasFeeDetails = fees.gen_obc || fees.sc_st || fees.ph || fees.female;
 
   // JSON-LD JobPosting Schema for Google Jobs Rich Snippet
@@ -298,7 +313,7 @@ export default async function JobDetailPage({ params }: Props) {
           <div className="border-2 border-gray-300 rounded-sm overflow-hidden">
             <table className="w-full text-xs md:text-sm">
               <tbody className="divide-y divide-gray-200">
-                {links.apply_online && (
+                {isValidUrl(links.apply_online) && (
                   <tr className="hover:bg-green-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50 w-1/2">
                       Apply Online
@@ -316,7 +331,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.download_notification && (
+                {isValidUrl(links.download_notification) && (
                   <tr className="hover:bg-red-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Download Official Notification
@@ -334,7 +349,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.result && (
+                {isValidUrl(links.result) && (
                   <tr className="hover:bg-emerald-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Download Result / Score Card
@@ -352,7 +367,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.admit_card && (
+                {isValidUrl(links.admit_card) && (
                   <tr className="hover:bg-blue-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Download Admit Card / Hall Ticket
@@ -370,7 +385,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.answer_key && (
+                {isValidUrl(links.answer_key) && (
                   <tr className="hover:bg-amber-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Download Answer Key
@@ -388,7 +403,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.syllabus && (
+                {isValidUrl(links.syllabus) && (
                   <tr className="hover:bg-purple-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Download Exam Syllabus &amp; Pattern
@@ -406,7 +421,7 @@ export default async function JobDetailPage({ params }: Props) {
                   </tr>
                 )}
 
-                {links.official_website && (
+                {isValidUrl(links.official_website) && (
                   <tr className="hover:bg-blue-50 transition-colors">
                     <td className="p-3 font-bold text-gray-800 bg-gray-50">
                       Official Department Website

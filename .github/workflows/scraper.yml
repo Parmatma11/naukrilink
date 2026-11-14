@@ -1,0 +1,31 @@
+name: Automated Sarkari Scraper & Cache Revalidator
+
+on:
+  schedule:
+    # Runs every 3 hours automatically (00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 UTC)
+    - cron: '0 */3 * * *'
+  # Allows manual triggering from the GitHub Actions tab anytime
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Scraper Dependencies
+        run: npm install cheerio pg
+
+      - name: Run Ingestion Scraper
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}
+        run: node scripts/scraper.js
