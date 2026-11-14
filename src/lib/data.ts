@@ -12,7 +12,8 @@ async function fetchHomeDataUncached() {
     query<Category>('SELECT id, name, slug, color_code, order_index FROM categories ORDER BY order_index ASC'),
     query<Job>(`
       SELECT 
-        j.id, j.category_id, j.title, j.slug, j.post_date, j.is_featured,
+        j.id, j.category_id, j.title, j.slug, j.department, j.post_date, j.is_featured,
+        j.age_limit, j.vacancy_details, j.short_info,
         c.name as category_name, c.slug as category_slug, c.color_code as category_color 
       FROM jobs j 
       JOIN categories c ON j.category_id = c.id 

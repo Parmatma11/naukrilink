@@ -76,3 +76,11 @@ export interface TickerAlert {
   is_active: boolean;
   created_at: string;
 }
+
+export interface CandidateFilterState {
+  age: number | '';
+  qualification: string;
+  sector: string;
+  categoryType: string;
+  experience: string;
+}
