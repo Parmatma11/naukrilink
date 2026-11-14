@@ -1,69 +1,137 @@
-import Image from "next/image";
+import { Metadata } from 'next';
+import pool from '@/lib/db';
+import { Category, Job, TickerAlert } from '@/types';
+import Ticker from '@/components/Ticker';
+import QuickLinksGrid from '@/components/QuickLinksGrid';
+import HomeGridClient from '@/components/HomeGridClient';
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'Sarkari Result 2026 : SarkariResult.Com Official Website for Latest Jobs, Results, Admit Card',
+  description: 'Sarkari Result 2026: Get latest Sarkari Result jobs, online application forms, admit cards, exam results, answer keys for Railway, SSC, UPSC, Bank, Police, UPPSC, Defence, and State govt exams.',
+  keywords: [
+    'Sarkari Result',
+    'Sarkari Result 2026',
+    'Sarkari Naukri',
+    'Latest Jobs',
+    'Admit Card',
+    'Govt Exam Results',
+    'Online Application Form',
+    'Railway Recruitment 2026',
+    'SSC CGL 2026',
+    'UPSC Exam',
+    'UPSSSC'
+  ],
+  alternates: {
+    canonical: 'https://www.sarkariresult.com/',
+  },
+  openGraph: {
+    title: 'Sarkari Result 2026 : Official Portal for Latest Govt Jobs, Results & Admit Cards',
+    description: 'Find all latest government recruitment notifications, online forms, admit cards, answer keys and syllabus at one place.',
+    type: 'website',
+    locale: 'en_IN',
+  },
+};
+
+async function getHomeData() {
+  const client = await pool.connect();
+  try {
+    // 1. Fetch categories
+    const categoriesRes = await client.query<Category>(
+      'SELECT * FROM categories ORDER BY order_index ASC'
+    );
+    const categories = categoriesRes.rows;
+
+    // 2. Fetch jobs
+    const jobsRes = await client.query<Job>(
+      `SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
+       FROM jobs j 
+       JOIN categories c ON j.category_id = c.id 
+       ORDER BY j.id DESC`
+    );
+
+    // Group jobs by category slug
+    const jobsByCategory: Record<string, Job[]> = {};
+    for (const cat of categories) {
+      jobsByCategory[cat.slug] = [];
+    }
+
+    for (const job of jobsRes.rows) {
+      if (job.category_slug) {
+        if (!jobsByCategory[job.category_slug]) {
+          jobsByCategory[job.category_slug] = [];
+        }
+        jobsByCategory[job.category_slug].push(job);
+      }
+    }
+
+    // 3. Fetch ticker alerts
+    const alertsRes = await client.query<TickerAlert>(
+      'SELECT * FROM ticker_alerts WHERE is_active = true ORDER BY id DESC LIMIT 10'
+    );
+    const alerts = alertsRes.rows;
+
+    return { categories, jobsByCategory, alerts };
+  } catch (err) {
+    console.error('Error fetching home data:', err);
+    return { categories: [], jobsByCategory: {}, alerts: [] };
+  } finally {
+    client.release();
+  }
+}
+
+interface PageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const { q } = await searchParams;
+  const { categories, jobsByCategory, alerts } = await getHomeData();
+
+  // Structured Data (JSON-LD) for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Sarkari Result 2026',
+    url: 'https://www.sarkariresult.com/',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://www.sarkariresult.com/?q={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+    description: 'Official portal for Sarkari Results, Admit Cards, and Latest Jobs in India.',
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* Marquee Ticker */}
+      <Ticker alerts={alerts} />
+
+      {/* Iconic Quick Category Color Blocks */}
+      <QuickLinksGrid />
+
+      {/* Hero Welcome Announcement */}
+      <div className="max-w-7xl mx-auto px-4 mt-2 mb-4">
+        <div className="bg-amber-50 border-2 border-red-800 p-3 text-center rounded-sm">
+          <h2 className="text-base md:text-xl font-extrabold text-red-800 tracking-wide">
+            Sarkari Result : SarkariResult.Com Official Website for Latest Jobs, Online Forms &amp; Results
+          </h2>
+          <p className="text-xs md:text-sm font-medium text-gray-700 mt-1">
+            Get 100% authenticated notifications for Central Government (SSC, UPSC, Railway, Defence) &amp; State Level (UP, Bihar, MP, Rajasthan, Delhi) examinations.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Multi-Column Main Layout with Integrated Live Search */}
+      <HomeGridClient
+        categories={categories}
+        jobsByCategory={jobsByCategory}
+        initialQuery={q || ''}
+      />
+    </>
   );
 }
