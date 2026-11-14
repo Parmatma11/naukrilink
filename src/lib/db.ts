@@ -7,12 +7,19 @@ declare global {
   var __pgPool: Pool | undefined;
 }
 
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres.qvwajcdxqqppzzxiktzx:K!%40rishan12@aws-1-ap-south-1.pooler.supabase.com:5432/postgres';
+
+const isSupabase = connectionString.includes('supabase.com');
+
 if (!global.__pgPool) {
   global.__pgPool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgrespassword@localhost:5432/sarkaridb',
+    connectionString,
+    ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 5000,
   });
 }
 

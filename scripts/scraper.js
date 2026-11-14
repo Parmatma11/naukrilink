@@ -1,12 +1,19 @@
 /**
- * Sarkari Portal Scraper & Ingestion Worker (Scoped Precision Parser)
+ * Sarkari Portal Scraper & Ingestion Worker (Configured for Supabase Cloud PostgreSQL)
  */
 
 const { Pool } = require('pg');
 const cheerio = require('cheerio');
 
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres.qvwajcdxqqppzzxiktzx:K!%40rishan12@aws-1-ap-south-1.pooler.supabase.com:5432/postgres';
+
+const isSupabase = connectionString.includes('supabase.com');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgrespassword@localhost:5432/sarkaridb',
+  connectionString,
+  ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
 });
 
 const BASE_URL = 'https://www.sarkariresult.com/';
@@ -207,7 +214,7 @@ async function parseJobDetail(url) {
 }
 
 async function scrapeFull() {
-  console.log('🚀 Running Precision Scraper...');
+  console.log('🚀 Running Precision Scraper on Supabase Database...');
   const client = await pool.connect();
 
   try {
