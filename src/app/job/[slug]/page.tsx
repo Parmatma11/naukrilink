@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 import { Job, VacancyDetail } from '@/types';
 import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase } from 'lucide-react';
 
@@ -10,9 +10,8 @@ interface Props {
 }
 
 async function getJob(slug: string): Promise<Job | null> {
-  const client = await pool.connect();
   try {
-    const res = await client.query<Job>(
+    const res = await query<Job>(
       `SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
        FROM jobs j 
        JOIN categories c ON j.category_id = c.id 
@@ -23,8 +22,6 @@ async function getJob(slug: string): Promise<Job | null> {
   } catch (err) {
     console.error('Error fetching job:', err);
     return null;
-  } finally {
-    client.release();
   }
 }
 

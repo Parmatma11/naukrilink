@@ -1,14 +1,13 @@
 import { MetadataRoute } from 'next';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 import { Category, Job } from '@/types';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sarkariresult.com';
 
-  const client = await pool.connect();
   try {
-    const catsRes = await client.query<Category>('SELECT slug FROM categories');
-    const jobsRes = await client.query<Job>('SELECT slug, updated_at FROM jobs');
+    const catsRes = await query<Category>('SELECT slug FROM categories');
+    const jobsRes = await query<Job>('SELECT slug, updated_at FROM jobs');
 
     const staticRoutes: MetadataRoute.Sitemap = [
       {
@@ -37,7 +36,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (err) {
     console.error('Error generating sitemap:', err);
     return [{ url: baseUrl, lastModified: new Date() }];
-  } finally {
-    client.release();
   }
 }

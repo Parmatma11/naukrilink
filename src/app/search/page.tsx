@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 import { Job } from '@/types';
 import SearchBar from '@/components/SearchBar';
 import { ArrowRight, Search, FileText } from 'lucide-react';
@@ -11,21 +11,19 @@ interface Props {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
-  const query = q || '';
+  const searchQuery = q || '';
   return {
-    title: query ? `Search Results for "${query}" - Sarkari Result 2026` : 'Search Government Jobs & Results 2026',
-    description: `Search all latest Sarkari Result recruitment notices, admit cards, answer keys and results for ${query}.`,
+    title: searchQuery ? `Search Results for "${searchQuery}" - Sarkari Result 2026` : 'Search Government Jobs & Results 2026',
+    description: `Search all latest Sarkari Result recruitment notices, admit cards, answer keys and results for ${searchQuery}.`,
   };
 }
 
-async function searchJobs(query: string): Promise<Job[]> {
-  if (!query.trim()) return [];
+async function searchJobs(queryString: string): Promise<Job[]> {
+  if (!queryString.trim()) return [];
 
-  const client = await pool.connect();
   try {
-    const words = query.trim().split(/\s+/).filter(Boolean);
-    
-    // Construct multi-word ILIKE query
+    const words = queryString.trim().split(/\s+/).filter(Boolean);
+
     const conditions: string[] = [];
     const values: any[] = [];
 
@@ -49,20 +47,18 @@ async function searchJobs(query: string): Promise<Job[]> {
       LIMIT 100
     `;
 
-    const res = await client.query<Job>(sql, values);
+    const res = await query<Job>(sql, values);
     return res.rows;
   } catch (err) {
     console.error('Error searching jobs:', err);
     return [];
-  } finally {
-    client.release();
   }
 }
 
 export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
-  const query = (q || '').trim();
-  const results = query ? await searchJobs(query) : [];
+  const queryStr = (q || '').trim();
+  const results = queryStr ? await searchJobs(queryStr) : [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -86,7 +82,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
       {/* Search Form */}
       <div className="bg-white border-x-2 border-b-2 border-red-700 p-4 shadow-sm mb-6">
-        <SearchBar initialValue={query} autoFocus />
+        <SearchBar initialValue={queryStr} autoFocus />
 
         {/* Popular Search Suggestions */}
         <div className="mt-3 text-center">
@@ -106,11 +102,11 @@ export default async function SearchPage({ searchParams }: Props) {
       </div>
 
       {/* Results Section */}
-      {query ? (
+      {queryStr ? (
         <div className="bg-white border-2 border-gray-300 shadow-md rounded-sm overflow-hidden">
           <div className="bg-gray-100 px-4 py-2.5 border-b border-gray-300 flex items-center justify-between text-xs md:text-sm font-bold text-gray-800">
             <span>
-              Found {results.length} results matching: &quot;<span className="text-red-700">{query}</span>&quot;
+              Found {results.length} results matching: &quot;<span className="text-red-700">{queryStr}</span>&quot;
             </span>
             <Link href="/" className="text-red-700 hover:underline text-xs">
               « Back to Homepage

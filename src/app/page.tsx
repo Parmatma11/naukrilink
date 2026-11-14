@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 import { Category, Job, TickerAlert } from '@/types';
 import Ticker from '@/components/Ticker';
 import QuickLinksGrid from '@/components/QuickLinksGrid';
@@ -33,16 +33,15 @@ export const metadata: Metadata = {
 };
 
 async function getHomeData() {
-  const client = await pool.connect();
   try {
     // 1. Fetch categories
-    const categoriesRes = await client.query<Category>(
+    const categoriesRes = await query<Category>(
       'SELECT * FROM categories ORDER BY order_index ASC'
     );
     const categories = categoriesRes.rows;
 
     // 2. Fetch jobs
-    const jobsRes = await client.query<Job>(
+    const jobsRes = await query<Job>(
       `SELECT j.*, c.name as category_name, c.slug as category_slug, c.color_code as category_color 
        FROM jobs j 
        JOIN categories c ON j.category_id = c.id 
@@ -65,7 +64,7 @@ async function getHomeData() {
     }
 
     // 3. Fetch ticker alerts
-    const alertsRes = await client.query<TickerAlert>(
+    const alertsRes = await query<TickerAlert>(
       'SELECT * FROM ticker_alerts WHERE is_active = true ORDER BY id DESC LIMIT 10'
     );
     const alerts = alertsRes.rows;
@@ -74,8 +73,6 @@ async function getHomeData() {
   } catch (err) {
     console.error('Error fetching home data:', err);
     return { categories: [], jobsByCategory: {}, alerts: [] };
-  } finally {
-    client.release();
   }
 }
 

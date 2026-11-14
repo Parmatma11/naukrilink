@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 import { Category, Job } from '@/types';
 
 interface Props {
@@ -9,9 +9,8 @@ interface Props {
 }
 
 async function getCategoryData(slug: string) {
-  const client = await pool.connect();
   try {
-    const catRes = await client.query<Category>(
+    const catRes = await query<Category>(
       'SELECT * FROM categories WHERE slug = $1',
       [slug]
     );
@@ -19,7 +18,7 @@ async function getCategoryData(slug: string) {
 
     if (!category) return null;
 
-    const jobsRes = await client.query<Job>(
+    const jobsRes = await query<Job>(
       'SELECT * FROM jobs WHERE category_id = $1 ORDER BY id DESC',
       [category.id]
     );
@@ -28,8 +27,6 @@ async function getCategoryData(slug: string) {
   } catch (err) {
     console.error('Error fetching category data:', err);
     return null;
-  } finally {
-    client.release();
   }
 }
 
@@ -83,7 +80,7 @@ export default async function CategoryPage({ params }: Props) {
         {jobs.length === 0 ? (
           <div className="p-8 text-center text-gray-500 italic">No posts found in this category.</div>
         ) : (
-          jobs.map((job, idx) => (
+          jobs.map((job) => (
             <div key={job.id} className="p-3.5 hover:bg-gray-50 transition-colors flex items-start gap-2.5">
               <span className="text-red-700 font-bold text-sm mt-0.5">•</span>
               <div className="flex-1">
