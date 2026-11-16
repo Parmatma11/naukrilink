@@ -8,12 +8,13 @@ import HomeGridClient from '@/components/HomeGridClient';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: 'Sarkari Result 2026 : SarkariResult.Com Official Website for Latest Jobs, Results, Admit Card',
-  description: 'Sarkari Result 2026: Get latest Sarkari Result jobs, online application forms, admit cards, exam results, answer keys for Railway, SSC, UPSC, Bank, Police, UPPSC, Defence, and State govt exams.',
+  title: 'Govt Job 2026 : GovtJob.site Website for Latest Jobs, Results, Admit Card',
+  description: 'Govt Job 2026: Get latest government jobs, online application forms, admit cards, exam results, answer keys for Railway, SSC, UPSC, Bank, Police, UPPSC, Defence, and State govt exams.',
   keywords: [
-    'Sarkari Result',
-    'Sarkari Result 2026',
-    'Sarkari Naukri',
+    'Govt Job',
+    'Govt Job 2026',
+    'Govt Jobs Portal',
+    'Government Jobs',
     'Latest Jobs',
     'Admit Card',
     'Govt Exam Results',
@@ -24,10 +25,10 @@ export const metadata: Metadata = {
     'UPSSSC'
   ],
   alternates: {
-    canonical: 'https://www.sarkariresult.com/',
+    canonical: 'https://www.govtjob.site/',
   },
   openGraph: {
-    title: 'Sarkari Result 2026 : Official Portal for Latest Govt Jobs, Results & Admit Cards',
+    title: 'Govt Job 2026 : Official Portal for Latest Govt Jobs, Results & Admit Cards',
     description: 'Find all latest government recruitment notifications, online forms, admit cards, answer keys and syllabus at one place.',
     type: 'website',
     locale: 'en_IN',
@@ -47,14 +48,14 @@ export default async function HomePage({ searchParams }: PageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Sarkari Result 2026',
-    url: 'https://www.sarkariresult.com/',
+    name: 'Govt Job 2026',
+    url: 'https://www.govtjob.site/',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://www.sarkariresult.com/?q={search_term_string}',
+      target: 'https://www.govtjob.site/?q={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
-    description: 'Official portal for Sarkari Results, Admit Cards, and Latest Jobs in India.',
+    description: 'Official portal for Govt Job Results, Admit Cards, and Latest Jobs in India.',
   };
 
   return (
@@ -74,10 +75,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 mt-2 mb-4">
         <div className="bg-amber-50 border-2 border-red-800 p-3 text-center rounded-sm">
           <h2 className="text-base md:text-xl font-extrabold text-red-800 tracking-wide">
-            Sarkari Result : SarkariResult.Com Official Website for Latest Jobs, Online Forms &amp; Results
+            Govt Job : GovtJob.site Official Website for Latest Jobs, Online Forms &amp; Results
           </h2>
           <p className="text-xs md:text-sm font-medium text-gray-700 mt-1">
-            Get 100% authenticated notifications for Central Government (SSC, UPSC, Railway, Defence) &amp; State Level (UP, Bihar, MP, Rajasthan, Delhi) examinations.
+            Get all notifications for Central Government (SSC, UPSC, Railway, Defence) &amp; State Level (UP, Bihar, MP, Rajasthan, Delhi) examinations.
           </p>
         </div>
       </div>

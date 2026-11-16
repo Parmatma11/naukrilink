@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -6,15 +7,21 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Col 1 */}
         <div>
-          <h3 className="text-white font-bold text-base mb-3 border-b border-gray-700 pb-1">
-            Sarkari Result 2026
-          </h3>
-          <p className="text-gray-400 leading-relaxed">
-            Welcome to India&apos;s leading employment alert portal. Find latest government jobs, online application forms, admit cards, exam results, and answer keys in one place.
-          </p>
-          <div className="mt-3 text-red-400 font-semibold text-xs">
-            ★ Official Examination &amp; Recruitment Portal
+          <div className="flex items-center gap-2.5 mb-3 border-b border-gray-700 pb-2">
+            <Image
+              src="/logo.svg"
+              alt="Govt Job Circular Logo"
+              width={36}
+              height={36}
+              className="w-8 h-8 rounded-full border border-amber-400 shrink-0"
+            />
+            <h3 className="text-white font-bold text-base">
+              Govt Job 2026
+            </h3>
           </div>
+          <p className="text-gray-400 leading-relaxed">
+            Welcome to India&apos;s employment alert portal. Find latest government jobs, online application forms, admit cards, exam results, and answer keys in one place.
+          </p>
         </div>
 
         {/* Col 2 */}
@@ -54,7 +61,7 @@ export default function Footer() {
             This portal is an informational platform providing alerts regarding government recruitment notices, exam schedules, and results. We strongly advise all candidates to verify the official notification on the official department websites before applying.
           </p>
           <div className="mt-3 text-gray-500 text-[11px]">
-            Copyright &copy; 2026 SarkariResult. Built with Next.js &amp; PostgreSQL.
+            Copyright &copy; 2026 GovtJob.site.
           </div>
         </div>
       </div>

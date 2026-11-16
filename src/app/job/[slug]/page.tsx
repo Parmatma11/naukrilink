@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getCachedJob, getTopJobSlugs } from '@/lib/data';
 import { Job, VacancyDetail } from '@/types';
 import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase } from 'lucide-react';
@@ -22,17 +23,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const job = await getCachedJob(slug);
 
   if (!job) {
-    return { title: 'Job Not Found - Sarkari Result' };
+    return { title: 'Job Not Found - Govt Job' };
   }
 
   const title = `${job.title} - Online Form, Eligibility, Dates, Apply Online`;
-  const description = `${job.title} 2026. Check application begin and last date, fees, age limit, syllabus and direct application link on Sarkari Result.`;
+  const description = `${job.title} 2026. Check application begin and last date, fees, age limit, syllabus and direct application link on Govt Job.`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `https://www.sarkariresult.com/job/${job.slug}`,
+      canonical: `https://www.govtjob.site/job/${job.slug}`,
     },
     openGraph: {
       title,
@@ -57,6 +58,13 @@ export default async function JobDetailPage({ params }: Props) {
   const links = job.important_links || {};
   const vacancies: VacancyDetail[] = Array.isArray(job.vacancy_details) ? job.vacancy_details : [];
 
+  const cleanedShortInfo = job.short_info
+    ? job.short_info
+      .replace(/^Short Information\s*:?\s*/i, '')
+      .replace(/<\/?[^>]+(>|$)/g, '')
+      .trim()
+    : '';
+
   const isValidUrl = (url?: string): url is string => {
     if (!url || typeof url !== 'string') return false;
     const trimmed = url.trim().toLowerCase();
@@ -65,7 +73,11 @@ export default async function JobDetailPage({ params }: Props) {
       trimmed === 'https://www.sarkariresult.com/' ||
       trimmed === 'https://www.sarkariresult.com' ||
       trimmed === 'http://www.sarkariresult.com/' ||
-      trimmed === 'http://www.sarkariresult.com'
+      trimmed === 'http://www.sarkariresult.com' ||
+      trimmed === 'https://www.govtjob.site/' ||
+      trimmed === 'https://www.govtjob.site' ||
+      trimmed === 'https://www.govtjob.com/' ||
+      trimmed === 'https://www.govtjob.com'
     ) {
       return false;
     }
@@ -86,7 +98,7 @@ export default async function JobDetailPage({ params }: Props) {
     hiringOrganization: {
       '@type': 'Organization',
       name: job.department || 'Government Recruitment Board',
-      sameAs: links.official_website || 'https://www.sarkariresult.com/',
+      sameAs: links.official_website || 'https://www.govtjob.site/',
     },
     jobLocation: {
       '@type': 'Place',
@@ -105,19 +117,19 @@ export default async function JobDetailPage({ params }: Props) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.sarkariresult.com/',
+        item: 'https://www.govtjob.site/',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: job.category_name || 'Jobs',
-        item: `https://www.sarkariresult.com/category/${job.category_slug}`,
+        item: `https://www.govtjob.site/category/${job.category_slug}`,
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: job.title,
-        item: `https://www.sarkariresult.com/job/${job.slug}`,
+        item: `https://www.govtjob.site/job/${job.slug}`,
       },
     ],
   };
@@ -146,21 +158,30 @@ export default async function JobDetailPage({ params }: Props) {
 
       {/* Main Post Card Container */}
       <div className="bg-white border-2 border-red-700 shadow-md rounded-sm overflow-hidden">
-        {/* Post Title Banner */}
+        {/* Post Title Banner with Circular Official Logo */}
         <div className="bg-[#8b0000] text-white p-4 text-center">
-          <h1 className="text-xl md:text-2xl font-extrabold uppercase tracking-wide leading-tight">
-            {job.title}
-          </h1>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-2">
+            <Image
+              src="/logo.svg"
+              alt="Govt Job Circular Logo"
+              width={48}
+              height={48}
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-amber-300 shadow-sm shrink-0 bg-white"
+            />
+            <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold uppercase tracking-wide leading-tight sm:text-left">
+              {job.title}
+            </h1>
+          </div>
           <p className="text-xs md:text-sm text-amber-200 font-semibold mt-1">
-            WWW.SARKARIRESULT.COM • POST DATE: {job.post_date || 'Latest 2026'}
+            WWW.GOVTJOB.SITE • POST DATE: {job.post_date || 'Latest 2026'}
           </p>
         </div>
 
         {/* Short Information Section */}
-        {job.short_info && (
+        {cleanedShortInfo && (
           <div className="p-4 bg-gray-50 border-b border-gray-200 text-xs md:text-sm text-gray-800 leading-relaxed">
             <span className="font-bold text-red-700">Short Information : </span>
-            {job.short_info}
+            {cleanedShortInfo}
           </div>
         )}
 
@@ -450,7 +471,7 @@ export default async function JobDetailPage({ params }: Props) {
           </span>
           <div className="flex gap-2">
             <a
-              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${job.title} - Apply Online at: https://www.sarkariresult.com/job/${job.slug}`)}`}
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${job.title} - Apply Online at: https://www.govtjob.site/job/${job.slug}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded-xs"
@@ -458,7 +479,7 @@ export default async function JobDetailPage({ params }: Props) {
               WhatsApp
             </a>
             <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(`https://www.sarkariresult.com/job/${job.slug}`)}&text=${encodeURIComponent(job.title)}`}
+              href={`https://t.me/share/url?url=${encodeURIComponent(`https://www.govtjob.site/job/${job.slug}`)}&text=${encodeURIComponent(job.title)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded-xs"

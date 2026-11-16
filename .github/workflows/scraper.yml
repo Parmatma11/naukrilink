@@ -1,4 +1,4 @@
-name: Automated Sarkari Scraper & Cache Revalidator
+name: Automated Govt Job Scraper & Cache Revalidator
 
 on:
   schedule:
@@ -21,11 +21,14 @@ jobs:
           node-version: 20
 
       - name: Install Scraper Dependencies
-        run: npm install cheerio pg
+        run: npm install cheerio pg web-push
 
       - name: Run Ingestion Scraper
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek' }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY || 'hxA1LwjHAAM7ajnIkLRs308oRw7VC3YBDMFAnAUdqp4' }}
+          VAPID_SUBJECT: 'mailto:alerts@govtjob.site'
         run: node scripts/scraper.js

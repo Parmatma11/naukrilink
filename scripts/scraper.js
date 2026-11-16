@@ -1,9 +1,15 @@
 /**
- * Sarkari Portal Scraper & Ingestion Worker (Configured for Supabase Cloud PostgreSQL)
+ * Govt Job Portal Scraper & Ingestion Worker (Configured for Supabase Cloud PostgreSQL)
  */
 
 const { Pool } = require('pg');
 const cheerio = require('cheerio');
+let webpush;
+try {
+  webpush = require('web-push');
+} catch (e) {
+  // Optional if web-push is not installed
+}
 
 let connectionString =
   process.env.DATABASE_URL ||
@@ -41,6 +47,7 @@ function cleanText(text) {
     .replace(/Sarkari\s*Result®?/gi, '')
     .replace(/SarkariResult\.Com/gi, '')
     .replace(/WWW\.SARKARIRESULT\.COM/gi, '')
+    .replace(/<\/?[^>]+(>|$)/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -138,7 +145,8 @@ async function parseJobDetail(url) {
     // Short Information
     if (rowText.includes('Short Information')) {
       const nextTr = $(row).next();
-      shortInfo = cleanText(nextTr.text() || $(row).text());
+      const rawInfo = nextTr.text() || $(row).text();
+      shortInfo = cleanText(rawInfo.replace(/^Short Information\s*:?\s*/i, ''));
     }
 
     // Age Limit
@@ -266,6 +274,7 @@ async function scrapeFull() {
 
     let totalUpdated = 0;
     let totalInserted = 0;
+    const newlyInsertedJobs = [];
 
     for (let i = 0; i < Math.min(quickLists.length, categoryMapping.length); i++) {
       const cat = categoryMapping[i];
@@ -341,6 +350,7 @@ async function scrapeFull() {
             ]
           );
           totalInserted++;
+          newlyInsertedJobs.push({ title: finalTitle, slug, category: cat.name });
           console.log(`\n✨ [NEW NOTIFICATION INSERTED] ${finalTitle}`);
         }
       }
@@ -348,10 +358,63 @@ async function scrapeFull() {
 
     console.log(`\n🎉 Ingestion complete! Updated: ${totalUpdated} | Newly Inserted: ${totalInserted}`);
 
+    // Broadcast Push Notifications to candidate subscribers if new jobs were found
+    if (newlyInsertedJobs.length > 0 && webpush) {
+      try {
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek';
+        const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'hxA1LwjHAAM7ajnIkLRs308oRw7VC3YBDMFAnAUdqp4';
+        const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:alerts@govtjob.site';
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.govtjob.site';
+
+        webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+
+        const subs = await client.query('SELECT id, endpoint, p256dh, auth FROM push_subscriptions');
+        if (subs.rows.length > 0) {
+          const latestJob = newlyInsertedJobs[0];
+          const payload = JSON.stringify({
+            title: `📢 New ${latestJob.category}: ${latestJob.title.slice(0, 50)}...`,
+            body: newlyInsertedJobs.length > 1
+              ? `Plus ${newlyInsertedJobs.length - 1} more new vacancies published today!`
+              : 'Application started. Click to check eligibility & apply online.',
+            url: `${siteUrl}/job/${latestJob.slug}`,
+            icon: '/icon.svg',
+            badge: '/icon.svg',
+            tag: `job-${latestJob.slug}`,
+          });
+
+          console.log(`\n🔔 Broadcasting Web Push to ${subs.rows.length} subscribers...`);
+          const deadIds = [];
+
+          await Promise.all(
+            subs.rows.map(async (sub) => {
+              try {
+                await webpush.sendNotification(
+                  { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                  payload
+                );
+              } catch (err) {
+                if (err.statusCode === 404 || err.statusCode === 410) {
+                  deadIds.push(sub.id);
+                }
+              }
+            })
+          );
+
+          if (deadIds.length > 0) {
+            await client.query('DELETE FROM push_subscriptions WHERE id = ANY($1::int[])', [deadIds]);
+            console.log(`🧹 Cleaned up ${deadIds.length} expired device subscriptions.`);
+          }
+          console.log(`✅ Push alerts delivered successfully!`);
+        }
+      } catch (pushErr) {
+        console.warn('Push broadcast note:', pushErr.message);
+      }
+    }
+
     // Trigger Next.js on-demand cache revalidation
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
-      const secret = process.env.REVALIDATION_SECRET || 'sarkari-revalidate-secret';
+      const secret = process.env.REVALIDATION_SECRET || 'govtjob-revalidate-secret';
       const revalRes = await fetch(`${siteUrl}/api/revalidate?secret=${secret}&tag=jobs`);
       if (revalRes.ok) {
         console.log('⚡ Next.js Cache successfully revalidated across all tags!');

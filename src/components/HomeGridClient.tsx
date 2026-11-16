@@ -9,7 +9,7 @@ import { matchesCandidateFilters } from '@/lib/filterUtils';
 import { Job, Category, CandidateFilterState } from '@/types';
 import { Search, ArrowRight, X, SlidersHorizontal, RotateCcw, Filter } from 'lucide-react';
 
-const STORAGE_KEY = 'sarkari_candidate_preferences_v1';
+const STORAGE_KEY = 'govt_job_candidate_preferences_v1';
 
 interface HomeGridClientProps {
   categories: Category[];
@@ -37,7 +37,7 @@ export default function HomeGridClient({
   // Load candidate filter preferences from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('sarkari_candidate_preferences_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
@@ -330,13 +330,13 @@ export default function HomeGridClient({
             </div>
           )}
 
-          {/* THE FAMOUS 3-COLUMN SARKARI RESULT SECTION */}
+          {/* THE FAMOUS 3-COLUMN GOVT JOB SECTION (Latest Jobs is First Column) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
             <ColumnBox
-              title="Result"
-              slug="results"
-              headerColor="bg-[#b91c1c]"
-              items={resultsJobs}
+              title="Latest Jobs"
+              slug="latest-jobs"
+              headerColor="bg-[#047857]"
+              items={latestJobs}
             />
             <ColumnBox
               title="Admit Card"
@@ -345,14 +345,14 @@ export default function HomeGridClient({
               items={admitCardJobs}
             />
             <ColumnBox
-              title="Latest Jobs"
-              slug="latest-jobs"
-              headerColor="bg-[#047857]"
-              items={latestJobs}
+              title="Result"
+              slug="results"
+              headerColor="bg-[#b91c1c]"
+              items={resultsJobs}
             />
           </div>
 
-          {/* SECONDARY SARKARI SECTION: Answer Key, Syllabus, Admission */}
+          {/* SECONDARY GOVT JOB SECTION: Answer Key, Syllabus, Admission */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
             <ColumnBox
               title="Answer Key"

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search } from 'lucide-react';
 
 export default function Header() {
@@ -14,19 +15,29 @@ export default function Header() {
 
   return (
     <header className="w-full bg-white border-b-2 border-red-700">
-      {/* Top Brand Banner */}
-      <div className="max-w-7xl mx-auto px-4 py-4 text-center">
-        <Link href="/" className="inline-block group">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-[#b91c1c] tracking-tight hover:opacity-95 transition-opacity">
-            SARKARI RESULT
-          </h1>
-          <p className="text-xs md:text-sm font-bold text-gray-700 tracking-wider mt-1 uppercase">
-            WWW.SARKARIRESULT.COM • OFFICIAL SARKARI RESULTS &amp; LATEST JOBS PORTAL 2026
-          </p>
+      {/* Top Brand Banner with Circular Emblem Logo */}
+      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 text-center">
+        <Link href="/" className="inline-flex items-center justify-center gap-3 md:gap-4 group">
+          <Image
+            src="/logo.svg"
+            alt="Govt Job Circular Emblem"
+            width={64}
+            height={64}
+            className="w-12 h-12 md:w-16 md:h-16 rounded-full shadow-md drop-shadow-sm transition-transform duration-200 group-hover:scale-105 shrink-0"
+            priority
+          />
+          <div className="text-left">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#b91c1c] tracking-tight hover:opacity-95 transition-opacity leading-none">
+              GOVT JOB
+            </h1>
+            <p className="text-[10px] sm:text-xs md:text-sm font-bold text-gray-700 tracking-wider mt-1 uppercase">
+              WWW.GOVTJOB.SITE • OFFICIAL GOVT JOBS, RESULTS &amp; ADMIT CARDS PORTAL 2026
+            </p>
+          </div>
         </Link>
       </div>
 
-      {/* Primary Navigation Bar (Iconic Sarkari Maroon Bar) */}
+      {/* Primary Navigation Bar (Iconic Govt Job Maroon Bar) */}
       <nav className="bg-[#8b0000] text-white sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto px-2 flex flex-wrap items-center justify-center font-bold text-xs md:text-sm">
           {navItems.map((item, idx) => (

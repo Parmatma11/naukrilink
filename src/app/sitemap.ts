@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getCachedSitemapData } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sarkariresult.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.govtjob.site';
 
   try {
     const { categories, jobs } = await getCachedSitemapData();

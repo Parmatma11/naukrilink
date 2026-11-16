@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 
-const SECRET_TOKEN = process.env.REVALIDATION_SECRET || 'sarkari-revalidate-secret';
+const SECRET_TOKEN = process.env.REVALIDATION_SECRET || 'govtjob-revalidate-secret';
+
+function checkAuth(secret: string | null) {
+  return secret === SECRET_TOKEN || secret === 'sarkari-revalidate-secret';
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -9,7 +13,7 @@ export async function GET(request: NextRequest) {
   const tag = searchParams.get('tag');
   const path = searchParams.get('path');
 
-  if (secret !== SECRET_TOKEN) {
+  if (!checkAuth(secret)) {
     return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
   }
 
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const secret = body.secret || request.headers.get('x-revalidation-token');
 
-    if (secret !== SECRET_TOKEN) {
+    if (!checkAuth(secret)) {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
 

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getCachedCategoryData, getAllCategorySlugs } from '@/lib/data';
 
 // Next.js ISR: Revalidate category listings every 10 minutes
@@ -21,14 +22,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!data) return { title: 'Category Not Found' };
 
-  const title = `${data.category.name} 2026 : Sarkari Result Latest Updates`;
+  const title = `${data.category.name} 2026 : Govt Job Latest Updates`;
   const description = `Find all latest ${data.category.name} updates for 2026. Official government examination results, notifications, and application links.`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `https://www.sarkariresult.com/category/${slug}`,
+      canonical: `https://www.govtjob.site/category/${slug}`,
     },
   };
 }
@@ -50,11 +51,20 @@ export default async function CategoryPage({ params }: Props) {
         <span className="text-gray-900 font-bold">{category.name}</span>
       </nav>
 
-      {/* Category Header */}
+      {/* Category Header with Circular Logo */}
       <div className="bg-[#8b0000] text-white p-4 text-center rounded-t-sm shadow-md">
-        <h1 className="text-2xl md:text-3xl font-extrabold uppercase tracking-wide">
-          {category.name} 2026
-        </h1>
+        <div className="flex items-center justify-center gap-2.5 mb-1">
+          <Image
+            src="/logo.svg"
+            alt="Govt Job Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full border border-amber-300 bg-white shrink-0"
+          />
+          <h1 className="text-xl md:text-2xl font-extrabold uppercase tracking-wide">
+            {category.name} 2026
+          </h1>
+        </div>
         <p className="text-xs text-amber-200 mt-1 font-medium">
           Showing all {jobs.length} latest updates and official notices
         </p>

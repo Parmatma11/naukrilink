@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { searchJobsCached } from '@/lib/data';
 import SearchBar from '@/components/SearchBar';
 import { ArrowRight, Search, FileText } from 'lucide-react';
@@ -12,8 +13,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { q } = await searchParams;
   const searchQuery = (q || '').trim();
   return {
-    title: searchQuery ? `Search Results for "${searchQuery}" - Sarkari Result 2026` : 'Search Government Jobs & Results 2026',
-    description: `Search all latest Sarkari Result recruitment notices, admit cards, answer keys and results for ${searchQuery}.`,
+    title: searchQuery ? `Search Results for "${searchQuery}" - Govt Job 2026` : 'Search Government Jobs & Results 2026',
+    description: `Search all latest government recruitment notices, admit cards, answer keys and results for ${searchQuery}.`,
   };
 }
 
@@ -31,12 +32,20 @@ export default async function SearchPage({ searchParams }: Props) {
         <span className="text-gray-900 font-bold">Search Jobs &amp; Results</span>
       </nav>
 
-      {/* Search Header Banner */}
+      {/* Search Header Banner with Circular Logo */}
       <div className="bg-[#8b0000] text-white p-4 text-center rounded-t-sm shadow-md">
-        <h1 className="text-xl md:text-2xl font-extrabold uppercase tracking-wide flex items-center justify-center gap-2">
-          <Search className="w-5 h-5 text-amber-300" />
-          Search Sarkari Results &amp; Jobs 2026
-        </h1>
+        <div className="flex items-center justify-center gap-2.5 mb-1">
+          <Image
+            src="/logo.svg"
+            alt="Govt Job Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full border border-amber-300 bg-white shrink-0"
+          />
+          <h1 className="text-xl md:text-2xl font-extrabold uppercase tracking-wide">
+            Search Govt Jobs &amp; Results 2026
+          </h1>
+        </div>
         <p className="text-xs text-amber-200 mt-1 font-medium">
           Find notifications, admit cards, answer keys, and exam forms instantly
         </p>
