@@ -52,17 +52,37 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Col 4 */}
+        {/* Col 4: Policy & Legal (Mandatory for Google AdSense Compliance) */}
         <div>
           <h3 className="text-white font-bold text-base mb-3 border-b border-gray-700 pb-1">
-            Disclaimer
+            Policy &amp; Legal
           </h3>
-          <p className="text-gray-400 text-xs leading-relaxed">
-            This portal is an informational platform providing alerts regarding government recruitment notices, exam schedules, and results. We strongly advise all candidates to verify the official notification on the official department websites before applying.
-          </p>
-          <div className="mt-3 text-gray-500 text-[11px]">
-            Copyright &copy; 2026 GovtJob.site.
+          <ul className="space-y-1.5">
+            <li><Link href="/privacy-policy" className="hover:text-white">» Privacy Policy</Link></li>
+            <li><Link href="/terms" className="hover:text-white">» Terms &amp; Conditions</Link></li>
+            <li><Link href="/disclaimer" className="hover:text-white">» Non-Affiliation Disclaimer</Link></li>
+            <li><Link href="/about-us" className="hover:text-white">» About GovtJob.site</Link></li>
+            <li><Link href="/contact-us" className="hover:text-white">» Contact &amp; Support</Link></li>
+          </ul>
+          <div className="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400">
+            Official Non-Affiliation: GovtJob.site is an independent informational portal and is not associated with any government department.
           </div>
+        </div>
+      </div>
+
+      {/* Bottom Sub-Footer Legal Strip */}
+      <div className="max-w-7xl mx-auto px-4 mt-8 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 gap-2">
+        <p>
+          Copyright &copy; 2026 <strong>GovtJob.site</strong>. All rights reserved.
+        </p>
+        <div className="flex gap-4 text-[11px]">
+          <Link href="/privacy-policy" className="hover:text-white">Privacy</Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-white">Terms</Link>
+          <span>•</span>
+          <Link href="/disclaimer" className="hover:text-white">Disclaimer</Link>
+          <span>•</span>
+          <Link href="/contact-us" className="hover:text-white">Contact</Link>
         </div>
       </div>
     </footer>

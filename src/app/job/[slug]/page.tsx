@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCachedJob, getTopJobSlugs } from '@/lib/data';
 import { Job, VacancyDetail } from '@/types';
-import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase } from 'lucide-react';
+import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase, CheckCircle, HelpCircle, AlertTriangle } from 'lucide-react';
 
 // Next.js ISR: Revalidate job page in background every 30 minutes
 export const revalidate = 1800;
@@ -134,6 +134,44 @@ export default async function JobDetailPage({ params }: Props) {
     ],
   };
 
+  const faqs = [
+    {
+      q: `What is the last date to apply for ${job.title}?`,
+      a: dates.last_date
+        ? `The last date for online application submission is ${dates.last_date}. Candidates are advised to apply well before the deadline.`
+        : `Please refer to the official advertisement notification table above for the detailed closing date schedule.`,
+    },
+    {
+      q: `What is the application fee for ${job.title}?`,
+      a: (fees.gen_obc || fees.sc_st)
+        ? `General / OBC / EWS fee is ${fees.gen_obc || 'Check notification'}, and SC / ST / PH fee is ${fees.sc_st || 'Check notification'}. Candidates can pay exam fees online via Debit Card, Credit Card, or Net Banking.`
+        : `Check the Application Fee section above or download the official notification PDF for category-wise relaxation details.`,
+    },
+    {
+      q: `What is the age limit for this vacancy?`,
+      a: (age.min_age || age.max_age)
+        ? `The minimum age required is ${age.min_age || 'As per rules'} and maximum age is ${age.max_age || 'As per rules'}. Age relaxation is applicable as per government guidelines for reserved categories.`
+        : `Please check the Age Limit section above or read the official notification for post-wise age criteria.`,
+    },
+    {
+      q: `How can I apply for ${job.title}?`,
+      a: `Candidates can apply online by clicking on the direct 'Apply Online' link provided in the Important Links section above, or by visiting the official department website (${links.official_website || 'official portal'}).`,
+    },
+  ];
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.a,
+      },
+    })),
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <script
@@ -143,6 +181,10 @@ export default async function JobDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       {/* Breadcrumb Navigation */}
@@ -462,6 +504,67 @@ export default async function JobDetailPage({ params }: Props) {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* How to Fill Online Form - Step-by-Step Instructions */}
+        <div className="p-4 border-b-2 border-red-200 bg-gray-50">
+          <h2 className="text-sm md:text-base font-extrabold text-[#8b0000] uppercase mb-3 flex items-center gap-1.5 border-b border-red-100 pb-1">
+            <CheckCircle className="w-4 h-4 text-emerald-700" />
+            How to Fill {job.title} Online Form 2026
+          </h2>
+          <ol className="list-decimal list-inside space-y-2 text-xs md:text-sm text-gray-700 leading-relaxed">
+            <li>
+              <strong>Check Eligibility:</strong> Candidates can apply online between <strong>{dates.application_begin || 'application start'}</strong> to <strong>{dates.last_date || 'closing date'}</strong>.
+            </li>
+            <li>
+              <strong>Read Notification Carefully:</strong> Candidate must read the official notification PDF completely before applying for this recruitment vacancy.
+            </li>
+            <li>
+              <strong>Gather Documents:</strong> Kindly check and collect all required documents — Eligibility Proof, Photo ID, Address Details, and Basic Details.
+            </li>
+            <li>
+              <strong>Scan Documents:</strong> Keep ready scanned copies of documents related to the online application form — Passport Size Photo, Signature, ID Proof, and Caste/Category Certificate (if applicable).
+            </li>
+            <li>
+              <strong>Preview Form:</strong> Before final submission of the application form, carefully check the preview and all columns to ensure no spelling errors.
+            </li>
+            <li>
+              <strong>Pay Application Fee:</strong> If a candidate is required to pay the application fee, it must be submitted online. If required fees are not paid, your application form will remain incomplete.
+            </li>
+            <li>
+              <strong>Print Application Receipt:</strong> Take a final printout of the submitted application form and fee receipt for future reference during document verification.
+            </li>
+          </ol>
+        </div>
+
+        {/* Frequently Asked Questions (FAQ) Section - High Value Content for AdSense */}
+        <div className="p-4 border-b-2 border-red-200 bg-white">
+          <h2 className="text-sm md:text-base font-extrabold text-[#8b0000] uppercase mb-3 flex items-center gap-1.5 border-b border-red-100 pb-1">
+            <HelpCircle className="w-4 h-4 text-amber-700" />
+            Frequently Asked Questions (FAQ)
+          </h2>
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div key={index} className="bg-gray-50 p-3 rounded-xs border border-gray-200 text-xs md:text-sm">
+                <p className="font-extrabold text-gray-900 mb-1 flex items-start gap-1.5">
+                  <span className="text-red-700 font-black">Q{index + 1}:</span>
+                  <span>{faq.q}</span>
+                </p>
+                <p className="text-gray-700 pl-5 text-xs leading-relaxed">
+                  <span className="font-bold text-emerald-800">Ans: </span>
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Official Candidate Advisory Callout */}
+        <div className="p-3 bg-amber-50 border-b border-amber-200 text-[11px] md:text-xs text-amber-950 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <p>
+            <strong>Candidate Advisory:</strong> GovtJob.site is an independent informational alerts portal. We advise all candidates to cross-verify information with the official government advertisement released on the department website before applying.
+          </p>
         </div>
 
         {/* Social Share Callout */}
