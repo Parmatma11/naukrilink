@@ -435,6 +435,28 @@ async function scrapeFull() {
 
     console.log(`\n🎉 Ingestion complete! Updated: ${totalUpdated} | Newly Inserted: ${totalInserted}`);
 
+    // Automatically sync top alert ticker with the 10 newest jobs linking internally
+    try {
+      await client.query('TRUNCATE TABLE ticker_alerts RESTART IDENTITY');
+      await client.query(`
+        INSERT INTO ticker_alerts (text, link, is_active, created_at)
+        SELECT 
+          CASE 
+            WHEN length(title) > 65 THEN substring(title from 1 for 62) || '...'
+            ELSE title
+          END as text,
+          '/job/' || slug as link,
+          true as is_active,
+          NOW() as created_at
+        FROM jobs
+        ORDER BY id DESC
+        LIMIT 10
+      `);
+      console.log('📌 Top Ticker Alert bar synced with latest internal jobs.');
+    } catch (tickerErr) {
+      console.warn('Ticker sync note:', tickerErr.message);
+    }
+
     // Broadcast Push Notifications to candidate subscribers if new jobs were found
     if (newlyInsertedJobs.length > 0 && webpush) {
       try {
