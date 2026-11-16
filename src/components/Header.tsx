@@ -37,21 +37,21 @@ export default function Header() {
         </Link>
       </div>
 
-      {/* Primary Navigation Bar (Iconic Govt Job Maroon Bar) */}
+      {/* Primary Navigation Bar (Iconic Govt Job Maroon Bar - Mobile Horizontal Smooth Scroll) */}
       <nav className="bg-[#8b0000] text-white sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-2 flex flex-wrap items-center justify-center font-bold text-xs md:text-sm">
+        <div className="max-w-7xl mx-auto px-2 flex items-center justify-start md:justify-center overflow-x-auto no-scrollbar font-bold text-xs md:text-sm">
           {navItems.map((item, idx) => (
             <Link
               key={idx}
               href={item.href}
-              className="px-3 md:px-5 py-2.5 border-r border-red-900/60 hover:bg-[#a00000] transition-colors whitespace-nowrap"
+              className="px-3.5 md:px-5 py-2.5 border-r border-red-900/60 hover:bg-[#a00000] transition-colors whitespace-nowrap shrink-0"
             >
               {item.name}
             </Link>
           ))}
           <Link
             href="/search"
-            className="px-3 md:px-5 py-2.5 bg-red-900/80 hover:bg-[#a00000] transition-colors whitespace-nowrap flex items-center gap-1.5 text-amber-300 font-extrabold"
+            className="px-3.5 md:px-5 py-2.5 bg-red-900/80 hover:bg-[#a00000] transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 text-amber-300 font-extrabold"
           >
             <Search className="w-3.5 h-3.5" />
             <span>Search</span>

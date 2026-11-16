@@ -373,7 +373,7 @@ export default async function JobDetailPage({ params }: Props) {
             Important Direct Links
           </h2>
 
-          <div className="border-2 border-gray-300 rounded-sm overflow-hidden">
+          <div className="border-2 border-gray-300 rounded-sm overflow-x-auto">
             <table className="w-full text-xs md:text-sm">
               <tbody className="divide-y divide-gray-200">
                 {isValidUrl(links.apply_online) && (

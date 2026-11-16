@@ -55,7 +55,7 @@ export default function SearchBar({
           value={term}
           onChange={handleChange}
           autoFocus={autoFocus}
-          placeholder="Search: Type exam or job (e.g. SSC CGL, Railway NTPC, UPPSC, Police)..."
+          placeholder="Search jobs, admit cards, exams (e.g. SSC, Railway)..."
           className="w-full pl-10 pr-24 py-2.5 text-sm border-2 border-red-700 rounded-xs focus:outline-none focus:ring-2 focus:ring-red-600 bg-white shadow-inner font-medium text-gray-900 placeholder-gray-500"
         />
         <Search className="w-5 h-5 text-red-700 absolute left-3 pointer-events-none" />

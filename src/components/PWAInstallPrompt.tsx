@@ -92,11 +92,14 @@ export default function PWAInstallPrompt() {
             className="w-8 h-8 rounded-full border border-amber-300 shrink-0"
           />
           <div className="min-w-0 text-left">
-            <span className="font-extrabold text-xs sm:text-sm text-white">
-              Install Govt Job App :
-            </span>{' '}
-            <span className="text-[11px] sm:text-xs text-amber-200 leading-tight">
-              Get instant job alerts, offline mode &amp; 1-tap fast loading
+            <span className="font-extrabold text-xs sm:text-sm text-white block sm:inline">
+              Install Govt Job App
+            </span>
+            <span className="hidden sm:inline text-[11px] sm:text-xs text-amber-200">
+              {' '}: Get instant job alerts, offline mode &amp; 1-tap fast loading
+            </span>
+            <span className="sm:hidden block text-[10px] text-amber-200 leading-none">
+              Instant alerts &amp; offline access
             </span>
           </div>
         </div>
