@@ -407,7 +407,29 @@ async function scrapeFull() {
           }
         }
       } else {
-        throw new Error(`Both Homepage HTML and WordPress REST API failed to load (Status: ${wpRes.status})`);
+        console.warn(`⚠️ SarkariResult API returned status ${wpRes.status}. Activating Sister Mirror (RojgarResult)...`);
+        const mirrorRes = await fetch('https://rojgarresult.com/wp-json/wp/v2/posts?per_page=50', { headers: HEADERS });
+        if (mirrorRes.ok) {
+          const posts = await mirrorRes.json();
+          console.log(`📡 Ingesting ${posts.length} latest posts via Sister Mirror Engine...`);
+
+          for (let j = 0; j < posts.length; j++) {
+            const p = posts[j];
+            const rawTitle = cleanText(p.title?.rendered || '');
+            const sourceUrl = p.link;
+            const cat = inferCategory(rawTitle);
+
+            const res = await processSingleJob(client, cat, rawTitle, sourceUrl, newlyInsertedJobs);
+            if (res.updated) {
+              totalUpdated++;
+              process.stdout.write(`* [${j + 1}/${posts.length}] Updated [${cat.name}]: ${rawTitle.slice(0, 32)}...\n`);
+            } else if (res.inserted) {
+              totalInserted++;
+            }
+          }
+        } else {
+          throw new Error(`All sources (Homepage HTML, SarkariResult API, and Sister Mirror) failed to load.`);
+        }
       }
     }
 
