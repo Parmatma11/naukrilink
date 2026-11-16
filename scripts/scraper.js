@@ -28,7 +28,9 @@ const pool = new Pool({
 
 const BASE_URL = 'https://www.sarkariresult.com/';
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9'
 };
 
 function generateSlug(text) {
@@ -52,9 +54,24 @@ function cleanText(text) {
     .trim();
 }
 
+function inferCategory(title) {
+  const t = (title || '').toLowerCase();
+  if (/result|score card|marks|merit list/i.test(t)) return { id: 1, name: 'Results', slug: 'results' };
+  if (/admit card|hall ticket|call letter/i.test(t)) return { id: 2, name: 'Admit Card', slug: 'admit-card' };
+  if (/answer key/i.test(t)) return { id: 4, name: 'Answer Key', slug: 'answer-key' };
+  if (/syllabus|exam pattern/i.test(t)) return { id: 5, name: 'Syllabus', slug: 'syllabus' };
+  if (/admission|entrance|counselling/i.test(t)) return { id: 6, name: 'Admission', slug: 'admission' };
+  if (/certificate|verification/i.test(t)) return { id: 7, name: 'Certificate Verification', slug: 'certificate-verification' };
+  if (/correction|important notice|date extend/i.test(t)) return { id: 8, name: 'Important', slug: 'important' };
+  return { id: 3, name: 'Latest Jobs', slug: 'latest-jobs' };
+}
+
 async function fetchPage(url) {
   try {
-    const res = await fetch(url, { headers: HEADERS });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, { headers: HEADERS, signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     return await res.text();
   } catch (err) {
@@ -250,17 +267,86 @@ async function parseJobDetail(url) {
   };
 }
 
+async function processSingleJob(client, cat, rawTitle, sourceUrl, newlyInsertedJobs) {
+  if (!sourceUrl || !sourceUrl.startsWith('http') || !rawTitle) {
+    return { updated: false, inserted: false };
+  }
+
+  let detailData = null;
+  if (sourceUrl.includes('sarkariresult.com/')) {
+    detailData = await parseJobDetail(sourceUrl);
+  }
+
+  const finalTitle = (detailData && detailData.title) ? detailData.title : rawTitle;
+  const importantDates = detailData ? detailData.importantDates : {};
+  const applicationFee = detailData ? detailData.applicationFee : {};
+  const ageLimit = detailData ? detailData.ageLimit : {};
+  const vacancyDetails = detailData ? detailData.vacancyDetails : [];
+  const importantLinks = detailData ? detailData.importantLinks : { apply_online: sourceUrl };
+  const shortInfo = detailData ? detailData.shortInfo : `${rawTitle} Notification and details.`;
+  const postDate = detailData ? detailData.postDate : new Date().toLocaleDateString();
+
+  const existing = await client.query('SELECT id FROM jobs WHERE source_url = $1', [sourceUrl]);
+
+  if (existing.rows.length > 0) {
+    await client.query(
+      `UPDATE jobs SET 
+        title = $1, short_info = $2, post_date = $3,
+        important_dates = $4, application_fee = $5, age_limit = $6,
+        vacancy_details = $7, important_links = $8, updated_at = NOW()
+       WHERE id = $9`,
+      [
+        finalTitle, shortInfo, postDate,
+        JSON.stringify(importantDates), JSON.stringify(applicationFee), JSON.stringify(ageLimit),
+        JSON.stringify(vacancyDetails), JSON.stringify(importantLinks),
+        existing.rows[0].id
+      ]
+    );
+    return { updated: true, inserted: false, title: finalTitle };
+  } else {
+    let slug = generateSlug(finalTitle);
+    const slugCheck = await client.query('SELECT id FROM jobs WHERE slug = $1', [slug]);
+    if (slugCheck.rows.length > 0) {
+      slug = `${slug}-${Date.now().toString().slice(-4)}`;
+    }
+
+    await client.query(
+      `INSERT INTO jobs (
+        category_id, title, slug, short_info, post_date,
+        important_dates, application_fee, age_limit,
+        vacancy_details, important_links, source_url, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+      [
+        cat.id,
+        finalTitle,
+        slug,
+        shortInfo,
+        postDate,
+        JSON.stringify(importantDates),
+        JSON.stringify(applicationFee),
+        JSON.stringify(ageLimit),
+        JSON.stringify(vacancyDetails),
+        JSON.stringify(importantLinks),
+        sourceUrl
+      ]
+    );
+    newlyInsertedJobs.push({ title: finalTitle, slug, category: cat.name });
+    console.log(`\n✨ [NEW NOTIFICATION INSERTED] [${cat.name}] ${finalTitle}`);
+    return { updated: false, inserted: true, title: finalTitle };
+  }
+}
+
 async function scrapeFull() {
   console.log('🚀 Running Precision Scraper on Supabase Database...');
   const client = await pool.connect();
 
+  let totalUpdated = 0;
+  let totalInserted = 0;
+  const newlyInsertedJobs = [];
+
   try {
-    const homepageHtml = await fetchPage(BASE_URL);
-    if (!homepageHtml) throw new Error('Failed to load homepage HTML.');
+    let homepageHtml = await fetchPage(BASE_URL);
 
-    const $ = cheerio.load(homepageHtml);
-
-    const quickLists = $('ul.sarkari-quick-list');
     const categoryMapping = [
       { id: 1, name: 'Results', slug: 'results' },
       { id: 2, name: 'Admit Card', slug: 'admit-card' },
@@ -272,87 +358,56 @@ async function scrapeFull() {
       { id: 8, name: 'Important', slug: 'important' }
     ];
 
-    let totalUpdated = 0;
-    let totalInserted = 0;
-    const newlyInsertedJobs = [];
+    if (homepageHtml) {
+      console.log('🌐 Successfully loaded Homepage HTML. Scraping 8 category columns...');
+      const $ = cheerio.load(homepageHtml);
+      const quickLists = $('ul.sarkari-quick-list');
 
-    for (let i = 0; i < Math.min(quickLists.length, categoryMapping.length); i++) {
-      const cat = categoryMapping[i];
-      const listElement = quickLists[i];
-      const listItems = $(listElement).find('li a').toArray();
+      for (let i = 0; i < Math.min(quickLists.length, categoryMapping.length); i++) {
+        const cat = categoryMapping[i];
+        const listElement = quickLists[i];
+        const listItems = $(listElement).find('li a').toArray();
 
-      console.log(`\n📂 [${cat.name}] Updating ${listItems.length} items...`);
+        console.log(`\n📂 [${cat.name}] Ingesting ${listItems.length} items...`);
 
-      for (let j = 0; j < listItems.length; j++) {
-        const el = listItems[j];
-        const rawTitle = cleanText($(el).text());
-        const sourceUrl = $(el).attr('href');
+        for (let j = 0; j < listItems.length; j++) {
+          const el = listItems[j];
+          const rawTitle = cleanText($(el).text());
+          const sourceUrl = $(el).attr('href');
 
-        if (!sourceUrl || !sourceUrl.startsWith('http') || !rawTitle) continue;
-
-        let detailData = null;
-        if (sourceUrl.includes('sarkariresult.com/')) {
-          detailData = await parseJobDetail(sourceUrl);
-        }
-
-        const finalTitle = (detailData && detailData.title) ? detailData.title : rawTitle;
-        const importantDates = detailData ? detailData.importantDates : {};
-        const applicationFee = detailData ? detailData.applicationFee : {};
-        const ageLimit = detailData ? detailData.ageLimit : {};
-        const vacancyDetails = detailData ? detailData.vacancyDetails : [];
-        const importantLinks = detailData ? detailData.importantLinks : { apply_online: sourceUrl };
-        const shortInfo = detailData ? detailData.shortInfo : `${rawTitle} Notification and details.`;
-        const postDate = detailData ? detailData.postDate : new Date().toLocaleDateString();
-
-        const existing = await client.query('SELECT id FROM jobs WHERE source_url = $1', [sourceUrl]);
-
-        if (existing.rows.length > 0) {
-          await client.query(
-            `UPDATE jobs SET 
-              title = $1, short_info = $2, post_date = $3,
-              important_dates = $4, application_fee = $5, age_limit = $6,
-              vacancy_details = $7, important_links = $8, updated_at = NOW()
-             WHERE id = $9`,
-            [
-              finalTitle, shortInfo, postDate,
-              JSON.stringify(importantDates), JSON.stringify(applicationFee), JSON.stringify(ageLimit),
-              JSON.stringify(vacancyDetails), JSON.stringify(importantLinks),
-              existing.rows[0].id
-            ]
-          );
-          totalUpdated++;
-          process.stdout.write(`* [${j + 1}/${listItems.length}] Updated: ${rawTitle.slice(0, 28)}...\n`);
-        } else {
-          let slug = generateSlug(finalTitle);
-          const slugCheck = await client.query('SELECT id FROM jobs WHERE slug = $1', [slug]);
-          if (slugCheck.rows.length > 0) {
-            slug = `${slug}-${Date.now().toString().slice(-4)}`;
+          const res = await processSingleJob(client, cat, rawTitle, sourceUrl, newlyInsertedJobs);
+          if (res.updated) {
+            totalUpdated++;
+            process.stdout.write(`* [${j + 1}/${listItems.length}] Updated: ${rawTitle.slice(0, 32)}...\n`);
+          } else if (res.inserted) {
+            totalInserted++;
           }
-
-          await client.query(
-            `INSERT INTO jobs (
-              category_id, title, slug, short_info, post_date,
-              important_dates, application_fee, age_limit,
-              vacancy_details, important_links, source_url, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-            [
-              cat.id,
-              finalTitle,
-              slug,
-              shortInfo,
-              postDate,
-              JSON.stringify(importantDates),
-              JSON.stringify(applicationFee),
-              JSON.stringify(ageLimit),
-              JSON.stringify(vacancyDetails),
-              JSON.stringify(importantLinks),
-              sourceUrl
-            ]
-          );
-          totalInserted++;
-          newlyInsertedJobs.push({ title: finalTitle, slug, category: cat.name });
-          console.log(`\n✨ [NEW NOTIFICATION INSERTED] ${finalTitle}`);
         }
+      }
+    } else {
+      console.warn('⚠️ Homepage HTML blocked or unavailable (CloudFront WAF). Activating WordPress REST API Engine...');
+      const wpRes = await fetch('https://www.sarkariresult.com/wp-json/wp/v2/posts?per_page=50', { headers: HEADERS });
+
+      if (wpRes.ok) {
+        const posts = await wpRes.json();
+        console.log(`📡 Ingesting ${posts.length} latest posts directly via WordPress REST API...`);
+
+        for (let j = 0; j < posts.length; j++) {
+          const p = posts[j];
+          const rawTitle = cleanText(p.title?.rendered || '');
+          const sourceUrl = p.link;
+          const cat = inferCategory(rawTitle);
+
+          const res = await processSingleJob(client, cat, rawTitle, sourceUrl, newlyInsertedJobs);
+          if (res.updated) {
+            totalUpdated++;
+            process.stdout.write(`* [${j + 1}/${posts.length}] Updated [${cat.name}]: ${rawTitle.slice(0, 32)}...\n`);
+          } else if (res.inserted) {
+            totalInserted++;
+          }
+        }
+      } else {
+        throw new Error(`Both Homepage HTML and WordPress REST API failed to load (Status: ${wpRes.status})`);
       }
     }
 
@@ -411,6 +466,32 @@ async function scrapeFull() {
       }
     }
 
+    // Write GitHub Actions Step Summary if running in CI
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      try {
+        const fs = require('fs');
+        let summary = `### 🚀 Govt Job Scraper Ingestion Report\n\n`;
+        summary += `- **Run Time:** ${new Date().toUTCString()}\n`;
+        summary += `- **Existing Posts Refreshed:** \`${totalUpdated}\`\n`;
+        summary += `- **Newly Added Notifications:** \`${totalInserted}\`\n\n`;
+
+        if (newlyInsertedJobs.length > 0) {
+          summary += `#### ✨ Newly Added Notifications (${newlyInsertedJobs.length}):\n\n`;
+          summary += `| Category | Job Title | Link |\n`;
+          summary += `| :--- | :--- | :--- |\n`;
+          for (const job of newlyInsertedJobs) {
+            summary += `| **${job.category}** | ${job.title} | [View Post](https://www.govtjob.site/job/${job.slug}) |\n`;
+          }
+        } else {
+          summary += `> ℹ️ *No brand-new recruitment posts found in this run. Existing exam dates and links were refreshed.*\n`;
+        }
+
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+      } catch (e) {
+        // Ignored if summary file is unavailable
+      }
+    }
+
     // Trigger Next.js on-demand cache revalidation
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
@@ -424,6 +505,13 @@ async function scrapeFull() {
     }
   } catch (err) {
     console.error('Error during scraping:', err);
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      try {
+        const fs = require('fs');
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### ❌ Scraper Error Encountered\n\n\`\`\`\n${err.message}\n\`\`\`\n`);
+      } catch (e) {}
+    }
+    process.exitCode = 1;
   } finally {
     client.release();
     await pool.end();
