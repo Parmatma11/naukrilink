@@ -1,11 +1,36 @@
 import * as webpush from 'web-push';
 import { query } from '@/lib/db';
 
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek';
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'hxA1LwjHAAM7ajnIkLRs308oRw7VC3YBDMFAnAUdqp4';
-const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:alerts@govtjob.site';
+function cleanBase64Key(key: string): string {
+  return key
+    .trim()
+    .replace(/^["']|["']$/g, '') // remove surrounding quotes if entered in dashboard
+    .replace(/=+$/, '')          // remove trailing padding "=" to satisfy URL-safe base64
+    .replace(/\+/g, '-')          // standard to URL-safe
+    .replace(/\//g, '_');
+}
 
-webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+let isVapidConfigured = false;
+
+function ensureVapidConfigured(): boolean {
+  if (isVapidConfigured) return true;
+
+  try {
+    const rawPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek';
+    const rawPrivateKey = process.env.VAPID_PRIVATE_KEY || 'hxA1LwjHAAM7ajnIkLRs308oRw7VC3YBDMFAnAUdqp4';
+    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:alerts@govtjob.site';
+
+    const vapidPublicKey = cleanBase64Key(rawPublicKey);
+    const vapidPrivateKey = cleanBase64Key(rawPrivateKey);
+
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    isVapidConfigured = true;
+    return true;
+  } catch (err) {
+    console.warn('VAPID Initialization Notice:', (err as Error).message);
+    return false;
+  }
+}
 
 export interface PushPayload {
   title: string;
@@ -28,6 +53,11 @@ export interface PushSendResult {
  */
 export async function sendPushToAllSubscribers(payload: PushPayload): Promise<PushSendResult> {
   const result: PushSendResult = { total: 0, sent: 0, failed: 0, cleaned: 0 };
+
+  if (!ensureVapidConfigured()) {
+    console.warn('Cannot send push: VAPID keys not configured.');
+    return result;
+  }
 
   try {
     const res = await query<{ id: number; endpoint: string; p256dh: string; auth: string }>(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendPushToAllSubscribers } from '@/lib/push';
 
+export const dynamic = 'force-dynamic';
+
 const SECRET_TOKEN = process.env.REVALIDATION_SECRET || 'govtjob-revalidate-secret';
 
 export async function POST(req: NextRequest) {
