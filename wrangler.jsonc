@@ -17,9 +17,6 @@
       "localConnectionString": "postgresql://user:password@localhost:5432/postgres"
     }
   ],
-  "kv_namespaces": [
-    { "binding": "NEXT_INC_CACHE_KV", "id": "a300e11bc7a740c99a505b712032391d" }
-  ],
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://www.govtjob.site",
     "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek",
