@@ -1,13 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "naukrilink",
+  "name": "govtjob",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2024-09-23",
+  "compatibility_date": "2024-11-01",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://www.govtjob.site",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek",
+    "VAPID_SUBJECT": "mailto:alerts@govtjob.site",
+    "NODE_VERSION": "20"
   }
 }
