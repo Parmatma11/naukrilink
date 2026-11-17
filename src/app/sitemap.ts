@@ -1,6 +1,10 @@
 import { MetadataRoute } from 'next';
 import { getCachedSitemapData } from '@/lib/data';
 
+// Render at request time (not build time): the DB is only reachable through the Hyperdrive
+// binding at runtime, and a build-time failure would bake an empty sitemap into the cache.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.govtjob.site';
 
