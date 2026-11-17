@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "govtjob",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2024-11-01",
+  "compatibility_date": "2025-08-15",
   "compatibility_flags": [
     "nodejs_compat"
   ],
@@ -10,6 +10,15 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "c491699c33d9412ea8c6f3ebaacfdcf2"
+    }
+  ],
+  "kv_namespaces": [
+    { "binding": "NEXT_INC_CACHE_KV", "id": "a300e11bc7a740c99a505b712032391d" }
+  ],
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://www.govtjob.site",
     "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek",

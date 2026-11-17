@@ -16,10 +16,11 @@ function ensureVapidConfigured(): boolean {
   if (isVapidConfigured) return true;
 
   try {
-    const rawPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BFyy1-zz-cTGPcW1vHuqtLJ4J2fF05B59Fy3hUkAzrAb0pXvXlEmwT6Mc83kYlY-4Y4k2TkG6BPpuWtt-Bmb_ek';
-    const rawPrivateKey = process.env.VAPID_PRIVATE_KEY || 'hxA1LwjHAAM7ajnIkLRs308oRw7VC3YBDMFAnAUdqp4';
+    const rawPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+    const rawPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
     const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:alerts@govtjob.site';
 
+    if (!rawPublicKey || !rawPrivateKey) throw new Error('VAPID keys are not configured');
     const vapidPublicKey = cleanBase64Key(rawPublicKey);
     const vapidPrivateKey = cleanBase64Key(rawPrivateKey);
 

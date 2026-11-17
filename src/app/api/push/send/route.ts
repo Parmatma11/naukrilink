@@ -3,7 +3,6 @@ import { sendPushToAllSubscribers } from '@/lib/push';
 
 export const dynamic = 'force-dynamic';
 
-const SECRET_TOKEN = process.env.REVALIDATION_SECRET || 'govtjob-revalidate-secret';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +10,8 @@ export async function POST(req: NextRequest) {
     const { secret, title, body: alertBody, url, tag } = body;
 
     // Validate secret token to protect against unauthorized triggers
-    if (secret !== SECRET_TOKEN) {
+    const token = process.env.REVALIDATION_SECRET;
+    if (!token || secret !== token) {
       return NextResponse.json({ success: false, error: 'Unauthorized: invalid secret' }, { status: 401 });
     }
 

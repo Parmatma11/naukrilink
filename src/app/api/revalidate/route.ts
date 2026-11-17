@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 
-const SECRET_TOKEN = process.env.REVALIDATION_SECRET || 'govtjob-revalidate-secret';
-
 function checkAuth(secret: string | null) {
-  return secret === SECRET_TOKEN || secret === 'sarkari-revalidate-secret';
+  const token = process.env.REVALIDATION_SECRET;
+  return !!token && secret === token;
 }
 
 export async function GET(request: NextRequest) {

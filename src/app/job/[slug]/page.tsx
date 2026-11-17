@@ -2,17 +2,15 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCachedJob, getTopJobSlugs } from '@/lib/data';
+import { getCachedJob } from '@/lib/data';
 import { Job, VacancyDetail } from '@/types';
 import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase, CheckCircle, HelpCircle, AlertTriangle } from 'lucide-react';
 
 // Next.js ISR: Revalidate job page in background every 30 minutes
 export const revalidate = 1800;
 
-// Pre-render the top 50 latest jobs at build time for instant loading
-export async function generateStaticParams() {
-  return await getTopJobSlugs();
-}
+// Job pages render on demand (not at build): on Workers each prerender opened its own DB
+// connection and exhausted the pooler / timed out the build. Edge cache handles repeat hits.
 
 interface Props {
   params: Promise<{ slug: string }>;

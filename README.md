@@ -34,3 +34,12 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Deploying to Cloudflare Workers
+
+1. Create a Hyperdrive config (the Supabase pooler certificate is not trusted by workerd, so direct TLS from a Worker fails):
+   `npx wrangler hyperdrive create govtjob-db --connection-string="<DATABASE_URL>"`
+2. Add the returned id to `wrangler.jsonc`:
+   `"hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<id>" }]`
+3. Set secrets: `npx wrangler secret put REVALIDATION_SECRET` and `VAPID_PRIVATE_KEY` (and `DATABASE_URL` for non-Hyperdrive use).
+4. Build and deploy from Linux/CI (Windows needs symlink permission): `npm run build:worker && npm run deploy:worker`.
