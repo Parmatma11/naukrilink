@@ -13,7 +13,8 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "c491699c33d9412ea8c6f3ebaacfdcf2"
+      "id": "c491699c33d9412ea8c6f3ebaacfdcf2",
+      "localConnectionString": "postgresql://user:password@localhost:5432/postgres"
     }
   ],
   "kv_namespaces": [
