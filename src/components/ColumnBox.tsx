@@ -41,7 +41,7 @@ export default function ColumnBox({
                   {job.title}
                 </Link>
                 {job.is_featured && (
-                  <span className="ml-1.5 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs uppercase animate-pulse">
+                  <span className="ml-1.5 bg-red-800 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs uppercase">
                     New
                   </span>
                 )}

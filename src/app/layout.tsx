@@ -4,7 +4,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NotificationPrompt from '@/components/NotificationPrompt';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
-import { Analytics } from '@vercel/analytics/react';
 
 export const viewport: Viewport = {
   themeColor: '#8b0000',
@@ -60,7 +59,6 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <NotificationPrompt />
-        <Analytics />
       </body>
     </html>
   );

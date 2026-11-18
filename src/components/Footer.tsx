@@ -29,12 +29,12 @@ export default function Footer() {
           <h3 className="text-white font-bold text-base mb-3 border-b border-gray-700 pb-1">
             Quick Navigation
           </h3>
-          <ul className="space-y-1.5">
-            <li><Link href="/category/latest-jobs" className="hover:text-white">» Latest Government Jobs</Link></li>
-            <li><Link href="/category/admit-card" className="hover:text-white">» Hall Ticket / Admit Cards</Link></li>
-            <li><Link href="/category/results" className="hover:text-white">» Examination Results</Link></li>
-            <li><Link href="/category/answer-key" className="hover:text-white">» Official Answer Keys</Link></li>
-            <li><Link href="/category/syllabus" className="hover:text-white">» Exam Syllabus &amp; Pattern</Link></li>
+          <ul className="space-y-1">
+            <li><Link href="/category/latest-jobs" className="inline-block py-1 hover:text-white">» Latest Government Jobs</Link></li>
+            <li><Link href="/category/admit-card" className="inline-block py-1 hover:text-white">» Hall Ticket / Admit Cards</Link></li>
+            <li><Link href="/category/results" className="inline-block py-1 hover:text-white">» Examination Results</Link></li>
+            <li><Link href="/category/answer-key" className="inline-block py-1 hover:text-white">» Official Answer Keys</Link></li>
+            <li><Link href="/category/syllabus" className="inline-block py-1 hover:text-white">» Exam Syllabus &amp; Pattern</Link></li>
           </ul>
         </div>
 
@@ -43,12 +43,12 @@ export default function Footer() {
           <h3 className="text-white font-bold text-base mb-3 border-b border-gray-700 pb-1">
             Top Recruiters
           </h3>
-          <ul className="space-y-1.5">
-            <li><Link href="/?q=Railway" className="hover:text-white">» Railway Recruitment Board (RRB)</Link></li>
-            <li><Link href="/?q=SSC" className="hover:text-white">» Staff Selection Commission (SSC)</Link></li>
-            <li><Link href="/?q=UPSC" className="hover:text-white">» Union Public Service Commission (UPSC)</Link></li>
-            <li><Link href="/?q=UPSSSC" className="hover:text-white">» Uttar Pradesh UPSSSC / UPPSC</Link></li>
-            <li><Link href="/?q=Police" className="hover:text-white">» State Police &amp; Paramilitary Forces</Link></li>
+          <ul className="space-y-1">
+            <li><Link href="/?q=Railway" className="inline-block py-1 hover:text-white">» Railway Recruitment Board (RRB)</Link></li>
+            <li><Link href="/?q=SSC" className="inline-block py-1 hover:text-white">» Staff Selection Commission (SSC)</Link></li>
+            <li><Link href="/?q=UPSC" className="inline-block py-1 hover:text-white">» Union Public Service Commission (UPSC)</Link></li>
+            <li><Link href="/?q=UPSSSC" className="inline-block py-1 hover:text-white">» Uttar Pradesh UPSSSC / UPPSC</Link></li>
+            <li><Link href="/?q=Police" className="inline-block py-1 hover:text-white">» State Police &amp; Paramilitary Forces</Link></li>
           </ul>
         </div>
 
@@ -57,12 +57,12 @@ export default function Footer() {
           <h3 className="text-white font-bold text-base mb-3 border-b border-gray-700 pb-1">
             Policy &amp; Legal
           </h3>
-          <ul className="space-y-1.5">
-            <li><Link href="/privacy-policy" className="hover:text-white">» Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-white">» Terms &amp; Conditions</Link></li>
-            <li><Link href="/disclaimer" className="hover:text-white">» Non-Affiliation Disclaimer</Link></li>
-            <li><Link href="/about-us" className="hover:text-white">» About GovtJob.site</Link></li>
-            <li><Link href="/contact-us" className="hover:text-white">» Contact &amp; Support</Link></li>
+          <ul className="space-y-1">
+            <li><Link href="/privacy-policy" className="inline-block py-1 hover:text-white">» Privacy Policy</Link></li>
+            <li><Link href="/terms" className="inline-block py-1 hover:text-white">» Terms &amp; Conditions</Link></li>
+            <li><Link href="/disclaimer" className="inline-block py-1 hover:text-white">» Non-Affiliation Disclaimer</Link></li>
+            <li><Link href="/about-us" className="inline-block py-1 hover:text-white">» About GovtJob.site</Link></li>
+            <li><Link href="/contact-us" className="inline-block py-1 hover:text-white">» Contact &amp; Support</Link></li>
           </ul>
           <div className="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400">
             Official Non-Affiliation: GovtJob.site is an independent informational portal and is not associated with any government department.
@@ -75,14 +75,14 @@ export default function Footer() {
         <p>
           Copyright &copy; 2026 <strong>GovtJob.site</strong>. All rights reserved.
         </p>
-        <div className="flex gap-4 text-[11px]">
-          <Link href="/privacy-policy" className="hover:text-white">Privacy</Link>
+        <div className="flex items-center gap-4 text-xs">
+          <Link href="/privacy-policy" className="inline-block py-1.5 hover:text-white">Privacy</Link>
           <span>•</span>
-          <Link href="/terms" className="hover:text-white">Terms</Link>
+          <Link href="/terms" className="inline-block py-1.5 hover:text-white">Terms</Link>
           <span>•</span>
-          <Link href="/disclaimer" className="hover:text-white">Disclaimer</Link>
+          <Link href="/disclaimer" className="inline-block py-1.5 hover:text-white">Disclaimer</Link>
           <span>•</span>
-          <Link href="/contact-us" className="hover:text-white">Contact</Link>
+          <Link href="/contact-us" className="inline-block py-1.5 hover:text-white">Contact</Link>
         </div>
       </div>
     </footer>
