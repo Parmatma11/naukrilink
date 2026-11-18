@@ -120,8 +120,11 @@ export default function NotificationPrompt() {
 
   return (
     <>
-      {/* Floating Action Trigger Button (Bottom Right) */}
-      <div className="fixed bottom-5 right-5 z-40">
+      {/* Floating Action Trigger Button (Bottom Right, lifted above PWA banner when visible) */}
+      <div
+        className="fixed right-4 sm:right-5 z-40 transition-all duration-200"
+        style={{ bottom: 'calc(1.25rem + var(--pwa-banner-height, 0px))' }}
+      >
         {permission === 'granted' ? (
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -145,7 +148,7 @@ export default function NotificationPrompt() {
 
       {/* Slide-Up Alert Modal / Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
           <div className="bg-white border-2 border-red-700 rounded-sm shadow-2xl max-w-sm w-full overflow-hidden text-gray-900">
             {/* Modal Header with Circular Logo */}
             <div className="bg-[#8b0000] text-white p-3.5 flex items-center justify-between">

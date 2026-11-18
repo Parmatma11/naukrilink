@@ -52,6 +52,13 @@ export default function PWAInstallPrompt() {
     }
   }, []);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty('--pwa-banner-height', showPrompt ? '64px' : '0px');
+    return () => {
+      document.documentElement.style.setProperty('--pwa-banner-height', '0px');
+    };
+  }, [showPrompt]);
+
   const handleInstallClick = async () => {
     if (isIOS) {
       setShowIOSTip(true);
