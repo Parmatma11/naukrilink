@@ -23,7 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return { title: 'Category Not Found' };
 
   const title = `${data.category.name} 2026 : Govt Job Latest Updates`;
-  const description = `Find all latest ${data.category.name} updates for 2026. Official government examination results, notifications, and application links.`;
+  const latest = data.jobs.slice(0, 2).map((j) => j.title).join('; ');
+  const description = `${data.jobs.length} ${data.category.name} updates for 2026${latest ? `, latest: ${latest}` : ''}. Notifications, dates and direct links.`;
 
   return {
     title,
@@ -67,6 +68,11 @@ export default async function CategoryPage({ params }: Props) {
         </div>
         <p className="text-xs text-amber-200 mt-1 font-medium">
           Showing all {jobs.length} latest updates and official notices
+        </p>
+        <p className="text-xs text-white/90 mt-2 max-w-3xl mx-auto leading-relaxed">
+          This page lists every {category.name} update we track in 2026 — new notifications,
+          application start and last dates, and direct links to official sources. Open any entry
+          for eligibility, fees and age limit details.
         </p>
       </div>
 

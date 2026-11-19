@@ -11,6 +11,17 @@ const nextConfig: NextConfig = {
     cpus: 2,
     staticGenerationMaxConcurrency: 2,
   },
+  // Canonicalize apex -> www so Google doesn't index "alternate" host variants.
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'govtjob.site' }],
+        destination: 'https://www.govtjob.site/:path*',
+        permanent: true,
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

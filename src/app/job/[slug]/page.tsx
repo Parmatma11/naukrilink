@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCachedJob } from '@/lib/data';
+import { getCachedJob, getCachedRelatedJobs, isThinJob } from '@/lib/data';
 import { Job, VacancyDetail } from '@/types';
 import { Calendar, DollarSign, Users, ExternalLink, FileText, Globe, Share2, Briefcase, CheckCircle, HelpCircle, AlertTriangle } from 'lucide-react';
 
@@ -11,6 +11,14 @@ export const revalidate = 1800;
 
 // Job pages render on demand (not at build): on Workers each prerender opened its own DB
 // connection and exhausted the pooler / timed out the build. Edge cache handles repeat hits.
+
+// Parse "dd/mm/yyyy", "dd-mm-yyyy" or any Date-parsable string into an ISO date; undefined if unparseable.
+function parseLastDate(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  const m = raw.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+  const d = m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : new Date(raw);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -25,11 +33,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `${job.title} - Online Form, Eligibility, Dates, Apply Online`;
-  const description = `${job.title} 2026. Check application begin and last date, fees, age limit, syllabus and direct application link on Govt Job.`;
+
+  // Unique description built from real fields instead of one template for every page.
+  const vacancyList: VacancyDetail[] = Array.isArray(job.vacancy_details) ? job.vacancy_details : [];
+  const totalPosts = job.total_posts || (vacancyList.length === 1 ? vacancyList[0].total_post : '');
+  const lastDate = job.important_dates?.last_date;
+  const parts = [
+    job.department ? `${job.department} recruitment` : 'Recruitment notice',
+    totalPosts ? `${totalPosts} posts` : '',
+    lastDate ? `last date ${lastDate}` : '',
+    job.post_date ? `posted ${job.post_date}` : '',
+  ].filter(Boolean);
+  const description = `${job.title}: ${parts.join(', ')}. Eligibility, fees, age limit and direct apply link.`;
 
   return {
     title,
     description,
+    // Thin pages (no summary, no vacancy table) are kept out of the index.
+    robots: isThinJob(job) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: `https://www.govtjob.site/job/${job.slug}`,
     },
@@ -82,7 +103,9 @@ export default async function JobDetailPage({ params }: Props) {
     return true;
   };
 
-  const hasFeeDetails = fees.gen_obc || fees.sc_st || fees.ph || fees.female;
+  const relatedJobs = job.category_id ? await getCachedRelatedJobs(job.category_id, job.slug) : [];
+
+  const hasFeeDetails =fees.gen_obc || fees.sc_st || fees.ph || fees.female;
 
   // JSON-LD JobPosting Schema for Google Jobs Rich Snippet
   const jobPostingSchema = {
@@ -91,7 +114,8 @@ export default async function JobDetailPage({ params }: Props) {
     title: job.title,
     description: job.short_info || job.title,
     datePosted: job.created_at,
-    validThrough: dates.last_date ? new Date().toISOString() : undefined,
+    dateModified: job.updated_at || undefined,
+    validThrough: parseLastDate(dates.last_date),
     employmentType: 'FULL_TIME',
     hiringOrganization: {
       '@type': 'Organization',
@@ -556,6 +580,30 @@ export default async function JobDetailPage({ params }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Related jobs: internal links + extra unique context */}
+        {relatedJobs.length > 0 && (
+          <div className="p-4 border-b-2 border-red-200 bg-white">
+            <h2 className="text-sm md:text-base font-extrabold text-[#8b0000] uppercase mb-3 border-b border-red-100 pb-1">
+              More {job.category_name} Updates
+            </h2>
+            <ul className="list-disc list-inside space-y-1 text-xs md:text-sm">
+              {relatedJobs.map((r) => (
+                <li key={r.slug}>
+                  <Link href={`/job/${r.slug}`} className="text-blue-800 hover:underline font-medium">
+                    {r.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {job.updated_at && (
+          <p className="px-4 py-2 text-[11px] text-gray-500 bg-white">
+            Last updated: {new Date(job.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        )}
 
         {/* Official Candidate Advisory Callout */}
         <div className="p-3 bg-amber-50 border-b border-amber-200 text-[11px] md:text-xs text-amber-950 flex items-start gap-2">

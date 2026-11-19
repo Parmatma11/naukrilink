@@ -110,7 +110,11 @@ export const getCachedCategoryData = cache(async (slug: string) => {
 async function fetchSitemapDataUncached() {
   const [catsRes, jobsRes] = await Promise.all([
     query<Category>('SELECT slug FROM categories ORDER BY order_index ASC'),
-    query<Job>('SELECT slug, updated_at FROM jobs ORDER BY id DESC LIMIT 500')
+    // Exclude thin jobs (no summary and no vacancy table) — they are served noindex.
+    query<Job>(`SELECT slug, updated_at FROM jobs
+                WHERE COALESCE(TRIM(short_info), '') <> ''
+                   OR COALESCE(vacancy_details::text, '[]') NOT IN ('[]', 'null')
+                ORDER BY id DESC LIMIT 500`)
   ]);
   return {
     categories: catsRes.rows,
@@ -123,6 +127,30 @@ export const getCachedSitemapData = unstable_cache(
   ['sitemap-data-v1'],
   { revalidate: 3600, tags: ['sitemap', 'jobs', 'categories'] }
 );
+
+/** Thin = no summary text and no vacancy table; not worth indexing. Mirrors the sitemap SQL filter. */
+export function isThinJob(job: Job): boolean {
+  const hasSummary = !!job.short_info && job.short_info.replace(/<\/?[^>]+(>|$)/g, '').trim().length > 0;
+  const hasVacancies = Array.isArray(job.vacancy_details) && job.vacancy_details.length > 0;
+  return !hasSummary && !hasVacancies;
+}
+
+/** Related jobs from the same category for internal linking. */
+async function fetchRelatedJobsUncached(categoryId: number, excludeSlug: string) {
+  const res = await query<Pick<Job, 'title' | 'slug'>>(
+    'SELECT title, slug FROM jobs WHERE category_id = $1 AND slug <> $2 ORDER BY id DESC LIMIT 6',
+    [categoryId, excludeSlug]
+  );
+  return res.rows;
+}
+
+export const getCachedRelatedJobs = cache(async (categoryId: number, excludeSlug: string) => {
+  return unstable_cache(
+    () => fetchRelatedJobsUncached(categoryId, excludeSlug),
+    [`related-${categoryId}-${excludeSlug}`],
+    { revalidate: 1800, tags: ['jobs'] }
+  )();
+});
 
 /**
  * 5. Search Data Layer

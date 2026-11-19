@@ -11,56 +11,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { categories, jobs } = await getCachedSitemapData();
 
+    // Real lastmod values only: Google ignores lastmod once it is always "now".
+    const latestJobUpdate = jobs.reduce<Date | undefined>((max, j) => {
+      const d = j.updated_at ? new Date(j.updated_at) : undefined;
+      return d && (!max || d > max) ? d : max;
+    }, undefined);
+    const staticLastModified = new Date('2026-01-01');
+
     const staticRoutes: MetadataRoute.Sitemap = [
       {
         url: baseUrl,
-        lastModified: new Date(),
-        changeFrequency: 'always',
+        lastModified: latestJobUpdate,
         priority: 1.0,
       },
-      {
-        url: `${baseUrl}/privacy-policy`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/terms`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/disclaimer`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/about-us`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/contact-us`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
+      ...['privacy-policy', 'terms', 'disclaimer', 'about-us', 'contact-us'].map((p) => ({
+        url: `${baseUrl}/${p}`,
+        lastModified: staticLastModified,
+        priority: 0.5,
+      })),
     ];
 
     const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
       url: `${baseUrl}/category/${cat.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'hourly',
+      lastModified: latestJobUpdate,
       priority: 0.9,
     }));
 
     const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
       url: `${baseUrl}/job/${job.slug}`,
-      lastModified: new Date(job.updated_at || Date.now()),
-      changeFrequency: 'daily',
+      lastModified: job.updated_at ? new Date(job.updated_at) : undefined,
       priority: 0.8,
     }));
 
