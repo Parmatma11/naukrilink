@@ -112,7 +112,7 @@ export default async function JobDetailPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: job.short_info || job.title,
+    description: cleanedShortInfo || job.title,
     datePosted: job.created_at,
     dateModified: job.updated_at || undefined,
     validThrough: parseLastDate(dates.last_date),
